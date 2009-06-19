@@ -77,9 +77,7 @@ typedef enum { false, true } bool;
 
 // SDL_main support for OSX
 #ifdef __APPLE__
-#ifdef USE_SDL
 #include "SDL/SDL.h"
-#endif
 #endif
 
 #ifdef __cplusplus
