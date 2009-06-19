@@ -1,0 +1,29 @@
+8
+
+dir
+127
+https://libtcod.googlecode.com/svn/trunk/dependencies/zlib-1.2.3/lib/osx
+https://libtcod.googlecode.com/svn
+
+
+
+2009-02-02T04:15:26.647974Z
+102
+michael.derosa
+
+
+svn:special svn:externals svn:needs-lock
+
+libz.a
+file
+
+
+
+
+2008-12-28T00:05:20.000000Z
+754a5a16a89e4b56fc37f6f1f5188e48
+2009-02-02T04:15:26.647974Z
+102
+michael.derosa
+has-props
+

@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/54/trunk/dependencies/SDL-1.2.12/lib/mingw
+END
+libSDL.dll.a
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/54/trunk/dependencies/SDL-1.2.12/lib/mingw/libSDL.dll.a
+END
+libSDL.a
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/54/trunk/dependencies/SDL-1.2.12/lib/mingw/libSDL.a
+END

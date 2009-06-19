@@ -1,0 +1,284 @@
+#include "map.h"
+#include <stdlib.h>
+#include <string.h>
+#include "bresenham3.h"
+
+#include <ncurses.h>
+
+#define MAP_TILE_PART       0xFF00 //xxxxxxxx00000000
+#define MAP_FLAG_PART       0x00FF //00000000xxxxxxxx
+#define MAP_FLAG_LIT_PART   0x00F0 //00000000xxxx0000
+#define MAP_FLAG_VOL_PART   0x000C //000000000000xx00
+#define MAP_FLAG_LOS_PART   0x0003 //00000000000000xx
+
+#define MAP_IND(flgs) ((flgs & MAP_TILE_PART) >> 8)
+#define MAP_SET_IND(flgs, ind) (((ind << 8) | (flgs & (~MAP_TILE_PART))))
+#define MAP_FLAGS(flgs) (flgs & MAP_FLAG_PART)
+#define MAP_SET_FLAGS(flgs, nflgs) (nflgs | (flgs & (~MAP_FLAG_PART)))
+#define MAP_LIT(flgs) ((flgs & MAP_FLAG_LIT_PART) >> 4)
+#define MAP_SET_LIT(flgs, lit) (((lit << 4) | (flgs & (~MAP_FLAG_LIT_PART))))
+#define MAP_VOL(flgs) ((flgs & MAP_FLAG_VOL_PART) >> 2)
+#define MAP_SET_VOL(flgs, vol) (((vol << 2) | (flgs & (~MAP_FLAG_VOL_PART))))
+#define MAP_LOS(flgs) (flgs & MAP_FLAG_LOS_PART)
+#define MAP_SET_LOS(flgs, los) (((los) | (flgs & (~MAP_FLAG_LOS_PART))))
+
+Map map_new() {
+  #warning new should use calloc, init should free all ptrs just in case
+  //this is so that an object can be init-ed multiple times in a row to avoid some allocations
+  return malloc(sizeof(struct _map));
+}
+Map map_init(
+  Map m, 
+  char *room, 
+  mapVec sz, 
+  unsigned short *tilemap,
+  char ambientLight
+) {
+  m->id = malloc(strlen(room)*sizeof(char));
+  strcpy(m->id, room);
+  m->sz = sz;
+  m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(short));
+  memcpy(m->tilemap, tilemap, sz.x*sz.y*sz.z*sizeof(short));
+  for(int i = 0; i < sz.x*sz.y*sz.z; i++) {
+    #warning not really sure about this ambient light stuff, etc.
+    m->tilemap[i] = (tilemap[i] << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
+  }
+  m->tileSet = tileset_init(tileset_new());
+  m->ambientLight = ambientLight;
+  m->exits = TCOD_list_new();
+  m->objects = TCOD_list_new();
+  return m;
+}
+void map_free(Map m) {
+  free(m->id);
+  tileset_free(m->tileSet);
+  free(m->tilemap);
+  for(int i = 0; i < TCOD_list_size(m->exits); i++) {
+    exit_free(TCOD_list_get(m->exits, i));
+  }
+  TCOD_list_delete(m->exits);
+  free(m);
+}
+
+void map_add_exit(Map m, Exit ex) {
+  TCOD_list_push(m->exits, ex);
+}
+void map_remove_exit(Map m, Exit ex) {
+  TCOD_list_remove(m->exits, ex);
+}
+
+void map_add_tile(Map m, Tile t) {
+  tileset_add_tile(m->tileSet, t);
+}
+
+void map_add_object(Map m, Object o) {
+  TCOD_list_push(m->objects, o);
+}
+void map_remove_object(Map m, Object o) {
+  if(o != NULL) {
+    TCOD_list_remove(m->objects, o);
+    object_free(o);
+  }
+}
+void map_remove_object_at(Map m, int i) {
+  map_remove_object(m, map_get_object(m, i));
+}
+void map_remove_object_named(Map m, char *id) {
+  map_remove_object(m, map_get_object_named(m, id));
+}
+Object map_get_object(Map m, int i) {
+  return TCOD_list_get(m->objects, i);
+}
+Object map_get_object_named(Map m, char *id) {
+  for(int i = 0; i < map_object_count(m); i++) {
+    Object o = map_get_object(m, i);
+    if(strcmp(object_id(o), id) == 0) {
+      return o;
+    }
+  }
+  return NULL;
+}
+int map_object_count(Map m) {
+  return TCOD_list_size(m->objects);
+}
+
+void map_move_object(Map m, char *id, mapVec delta) {  
+  Object o = map_get_object_named(m, id), o2;
+  //update the object's sensors?
+  object_sense(o);
+  
+  object_move(o, delta);
+  //update any sensors that might see it now
+  for(int i = 0; i < map_object_count(m); i++) {
+    o2 = map_get_object(m, i);
+    if(o2 != o) {
+      object_note_object_moved(o2, o, delta);
+    }
+  }
+}
+
+
+void map_turn_object(Map m, char *id, int amt) {
+  Object o = map_get_object_named(m, id), o2;
+  object_turn(o, amt);
+  #warning send a stimulus to all sensors that can see this object
+  for(int i = 0; i < map_object_count(m); i++) {
+    o2 = map_get_object(m, i);
+    if(o2 != o) {
+      //??
+    }
+  }
+}
+
+void map_get_region(Map m, unsigned short *flags, mapVec start, mapVec end) {
+  int readCount = 0;
+  mapVec size = m->sz;
+  for(int z = start.z; z <= end.z; z++) {
+    for(int y = start.y; y <= end.y; y++) {
+      for(int x = start.x; x <= end.x; x++) {
+        int index = size.x*size.y*(size.z-z-1)+size.x*y+x;
+        flags[readCount] = MAP_FLAGS(m->tilemap[index]);
+        readCount++;
+      }
+    }
+  }
+}
+
+int map_tile_index(Map m, int x, int y, int z) {
+  return tile_index(x, y, z, m->sz);
+}
+
+unsigned char map_tile_at_index(Map m, int i) {
+  return MAP_IND(m->tilemap[i]);
+}
+
+unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd) {
+  //try to trace back to position through tiles that allow light to pass (flag bit 2)  
+  int x, y, z;
+  if(TCOD_line3_step_mt(&x, &y, &z, bd)) {
+    //if you hit the position, you and everything you touched are visible. stop.
+    return 0x03;
+  }
+  unsigned int index = map_tile_index(m, x, y, z);
+  unsigned short mapItem = m->tilemap[index];
+  unsigned char flg = MAP_FLAGS(mapItem);
+  unsigned char tileIndex   = MAP_IND(mapItem);
+  unsigned char vis         = MAP_LOS(mapItem);
+  Tile tileDef              = tileset_tile(m->tileSet, tileIndex);
+  unsigned char blockage    = tile_light_blockage(tileDef);
+  if(blockage == 0x03 || vis == 0x01) {
+    //if you hit a wall, you and everything you touched are non-visible. stop.
+    //if you trace through a known non-visible tile, you and everything you touched are also non-visible. stop.
+    return 0x01; //bail and propagate
+  } else if(blockage > 0x00) {
+    //partially visible through light blockage -- later, refine to account for repeated blockage by treating this as a subtraction, rather than a set.
+    return 0x02;
+  }
+  if(vis > 0x01) {
+    //if you trace through a known visible tile, you and everything you touched are also visible to the same extent. stop.
+    return vis; //it's visible, go ahead!
+  }
+  //otherwise, we're tracing through a tile with unknown visibility.  keep going!
+  unsigned char recviz = map_trace_light(m, flags, bd);
+  flags[index] = MAP_SET_LOS(flags[index], recviz); //update that tile with its visibility
+  //we must be the same visibility.
+  
+  return recviz;
+}
+//refactor to support an interface that includes a Light and updates the lit flags rather than the viz flags.
+void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol) {
+  //int times = 0;
+  mapVec position = volume_position(vol);
+  mapVec size = m->sz, cur;
+  unsigned int index;
+  unsigned char volFlags, newFlags, los;
+  unsigned short mapItem;
+  for(int z = 0; z < size.z; z++) {
+    for(int y = 0; y < size.y; y++) {
+      for(int x = 0; x < size.x; x++) {
+        index = map_tile_index(m, x, y, z);
+        mapItem   = m->tilemap[index];
+        volFlags  = MAP_VOL(mapItem);
+
+        newFlags = MAP_FLAGS(mapItem);
+        
+        //vis is 0 0 if unsure, 1 1 if known viz, 1 0 if edge of viz, 0 1 if known inviz.
+        if(volFlags == 0x00) {
+          cur = (mapVec){x, y, z};
+          //if it's within the volume
+          if(volume_contains_point(vol, cur, 0.0)) {
+            //this is a recursive fn that is also destructive to flags.  keep that in mind!
+            TCOD_bresenham3_data_t bd;
+            TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
+            los = map_trace_light(m, flags, &bd);
+
+            newFlags = MAP_SET_VOL(newFlags, 0x03);
+            newFlags = MAP_SET_LOS(newFlags, los);
+            //fill in the lit flags too!  easy squeasy!!
+            //litLevel = map_light_level(m, x, y, z); //fn assembles it from all the lights in the scene, with their cached light info (still needs to get updated when lights move, etc -- that probably updates an array of tileIndex->{lightID,lightLevel}-list?  pretty memory-intensive, that, but fairly easy on the processor and correct.  for bonus points, the first entry in the list could hold the aggregate!)
+            //newFlags = MAP_SET_LIT(newFlags, litLevel);
+          } else {
+            newFlags = MAP_SET_VOL(newFlags, 0x01);
+          }
+          flags[index] = newFlags;
+        }
+      }
+    }
+  }
+  //what about the exits?
+}
+
+void map_get_visible_objects(Map m, TCOD_list_t objs, unsigned char *visflags) {
+  unsigned char flags;
+  int index;
+  mapVec pt;
+  Object o;
+  for(int i = 0; i < map_object_count(m); i++) {
+    o = map_get_object(m, i);
+    pt = object_position(o);
+    index = map_tile_index(m, pt.x, pt.y, pt.z);
+    flags = visflags[index];
+    if(map_item_visible(flags)) {
+      TCOD_list_push(objs, o);
+    }
+  }
+}
+
+mapVec map_size(Map m) {
+  return m->sz;
+}
+
+unsigned char map_item_index(unsigned short mapItem) {
+  return MAP_IND(mapItem);
+}
+unsigned char map_item_flags(unsigned short mapItem) {
+  return MAP_FLAGS(mapItem);
+}
+int map_item_lit(unsigned short flags) {
+  return MAP_LIT(flags) > 1;
+}
+int map_item_in_volume(unsigned short flags) {
+  return MAP_VOL(flags) > 1;
+}
+int map_item_los(unsigned short flags) {
+  return MAP_LOS(flags) > 1;
+}
+int map_item_visible(unsigned short flags) {
+  return (MAP_LIT(flags) > 1) && (MAP_VOL(flags) > 1) && (MAP_LOS(flags) > 1);
+}
+
+//this is the interface for lighting up a room and changing its lighting properties.  there may also be an API for going through all lights and relighting from scratch.
+//for a new light, something like "map_get_visible_tiles" can give the unobstructed tiles in the volume (in the vis flags), which can then be used to fill in the lighting data.
+//when a light is removed, this should be done to unlight any areas lit by this light.
+//moving or turning a light may be a two-step process for now, since the obstruction calculations will have to be reperformed. this seems inefficient.  Fortunately, since lights are global, all objects can share the same lighting state.
+
+//another option is a separate method for returning lit status of a tile, or at least _separate storage_ of lit tiles per light, so that the oversaturation problem doesn't become a large bug (several full-brightness lights -- if naively done, removing one light might act as if all are removed)
+void map_note_light_added(Map m, unsigned char attenuation, int intensity, Volume vol) {
+  
+}
+void map_note_light_removed(Map m, unsigned char attenuation, int intensity, Volume vol) {
+  
+}
+void map_note_light_volume_changed(Map m, unsigned char attenuation, int intensity, Volume old, Volume new) {
+  
+}

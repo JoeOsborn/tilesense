@@ -1,0 +1,24 @@
+Products :
+
+- upx, The Ultimate Packer for eXecutables, by Markus Oberhumer, Laszlo Molnar & John Reiser
+   http://upx.sourceforge.net
+- zlib 1.2.3, by Jean-loup Gailly and Mark Adler
+   http://www.zlib.org
+- libpng 1.2.31, by Glenn Randers-Pehrson
+   http://www.libpng.org
+- SDL 1.2.12, by Sam Lantingua
+   http://www.libsdl.org
+
+Many thanks to everyone who provided feedback, and especially :
+- owners of projects using libtcod.
+- Chris Hammons for the C# port and valuable bug fixes.
+- Kyle 'Hex Decimal' Stewart & Emmanuel 'Altefcat' Dempuré for their contribution to the python port.
+- Michael De Rosa for the OSX port.
+- Sandman for various tricky bug fixes.
+
+Fonts :
+The celtic garamond and dundalk fonts are from 1001freefonts.com.
+The caeldera font is from blambot.com.
+Other fonts are included in windows. 
+The celtic_garamond_10x10.png bitmap font used by the samples is provided by Mingos.
+

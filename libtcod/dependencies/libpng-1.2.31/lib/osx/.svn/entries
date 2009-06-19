@@ -1,0 +1,29 @@
+8
+
+dir
+127
+https://libtcod.googlecode.com/svn/trunk/dependencies/libpng-1.2.31/lib/osx
+https://libtcod.googlecode.com/svn
+
+
+
+2009-02-02T04:15:26.647974Z
+102
+michael.derosa
+
+
+svn:special svn:externals svn:needs-lock
+
+libpng.a
+file
+
+
+
+
+2008-12-28T02:21:23.000000Z
+22ed906e8b07a6806eea54add3de1c9f
+2009-02-02T04:15:26.647974Z
+102
+michael.derosa
+has-props
+

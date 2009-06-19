@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/107/trunk/src/hmtool
+END
+operation.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/71/trunk/src/hmtool/operation.cpp
+END
+hmtool.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/107/trunk/src/hmtool/hmtool.cpp
+END
+operation.hpp
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/107/trunk/src/hmtool/operation.hpp
+END
+README.txt
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/107/trunk/src/hmtool/README.txt
+END

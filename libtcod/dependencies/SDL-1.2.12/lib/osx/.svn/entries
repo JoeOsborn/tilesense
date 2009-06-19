@@ -1,0 +1,42 @@
+8
+
+dir
+127
+https://libtcod.googlecode.com/svn/trunk/dependencies/SDL-1.2.12/lib/osx
+https://libtcod.googlecode.com/svn
+
+
+
+2009-02-02T04:15:26.647974Z
+102
+michael.derosa
+
+
+svn:special svn:externals svn:needs-lock
+
+libSDL.a
+file
+
+
+
+
+2008-12-28T00:59:04.000000Z
+fde898b46dcce7f558779f5d779070f6
+2009-02-02T04:15:26.647974Z
+102
+michael.derosa
+has-props
+
+libSDLmain.a
+file
+
+
+
+
+2008-12-28T01:50:32.000000Z
+53a7d16398979816b6f0c96a58fed789
+2009-02-02T04:15:26.647974Z
+102
+michael.derosa
+has-props
+
