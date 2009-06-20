@@ -40,19 +40,4 @@ Tile tile_init(
 void tile_free(Tile t);
 int tile_light_blockage(Tile t);
 
-
-struct _tile_set {
-  Tile *tiles;
-  int tileCount;
-};
-typedef struct _tile_set * TileSet;
-
-TileSet tileset_new();
-TileSet tileset_init(TileSet ts);
-void tileset_free(TileSet ts);
-TileSet tileset_add_tile(TileSet ts, Tile t);
-TileSet tileset_add_tiles(TileSet ts, Tile *t, int tileCount);
-int tileset_tile_count(TileSet ts);
-Tile tileset_tile(TileSet ts, int index);
-
 #endif

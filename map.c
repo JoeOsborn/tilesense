@@ -43,7 +43,8 @@ Map map_init(
     #warning not really sure about this ambient light stuff, etc.
     m->tilemap[i] = (tilemap[i] << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
   }
-  m->tileSet = tileset_init(tileset_new());
+  m->tileset = TCOD_list_new();
+  TCOD_list_add(m->tileset, tile_init(tile_new(), 0, 0, 0, 0, mapvec_zero, 0, 0, 0, 0, 0));
   m->ambientLight = ambientLight;
   m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();
@@ -51,12 +52,15 @@ Map map_init(
 }
 void map_free(Map m) {
   free(m->id);
-  tileset_free(m->tileSet);
   free(m->tilemap);
   for(int i = 0; i < TCOD_list_size(m->exits); i++) {
     exit_free(TCOD_list_get(m->exits, i));
   }
   TCOD_list_delete(m->exits);
+  for(int i = 0; i < TCOD_list_size(m->tileset); i++) {
+    tile_free(TCOD_list_get(m->tileset, i));
+  }
+  TCOD_list_delete(m->tileset);
   free(m);
 }
 
@@ -68,7 +72,7 @@ void map_remove_exit(Map m, Exit ex) {
 }
 
 void map_add_tile(Map m, Tile t) {
-  tileset_add_tile(m->tileSet, t);
+  TCOD_list_push(m->tileset, t);
 }
 
 void map_add_object(Map m, Object o) {
@@ -152,6 +156,10 @@ unsigned char map_tile_at_index(Map m, int i) {
   return MAP_IND(m->tilemap[i]);
 }
 
+Tile map_get_tiledef(Map m, int i) {
+  return TCOD_list_get(m->tileset, i);
+}
+
 unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd) {
   //try to trace back to position through tiles that allow light to pass (flag bit 2)  
   int x, y, z;
@@ -164,7 +172,7 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   unsigned char flg = MAP_FLAGS(mapItem);
   unsigned char tileIndex   = MAP_IND(mapItem);
   unsigned char vis         = MAP_LOS(mapItem);
-  Tile tileDef              = tileset_tile(m->tileSet, tileIndex);
+  Tile tileDef              = map_get_tiledef(m, tileIndex);
   unsigned char blockage    = tile_light_blockage(tileDef);
   if(blockage == 0x03 || vis == 0x01) {
     //if you hit a wall, you and everything you touched are non-visible. stop.
