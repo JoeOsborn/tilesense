@@ -147,7 +147,7 @@ void _frustum_remake_planes(Frustum f) {
 
   float xang = (ONE16TH*fovx);
   
-  mvprintw(8, 0, "facing: %f, fovx: %f, xang: %f", faceAngle, fovx, xang*180.0/3.14159);
+//  mvprintw(8, 0, "facing: %f, fovx: %f, xang: %f", faceAngle, fovx, xang*180.0/3.14159);
   float txang = tan(xang);
   float dxn = near;
   float dyn = txang*near;
@@ -184,11 +184,11 @@ void _frustum_remake_planes(Frustum f) {
   mapVec fp2 = (mapVec){dxf, -dyf, -dzf};
   mapVec fp3 = (mapVec){dxf, dyf, dzf};
 
-  mvprintw(12, 0, "np1dir: %f, np2dir: %f, np3dir: %f", mapvec_facing_to_radians(np1, 1), mapvec_facing_to_radians(np2, 1), mapvec_facing_to_radians(np3, 1));
-  mvprintw(13, 0, 
-    "n1: %f, %f, %f;\nn2: %f, %f, %f;\nn3: %f, %f, %f", 
-    np1.x,np1.y,np1.z, np2.x,np2.y,np2.z, np3.x,np3.y,np3.z
-  );
+//  mvprintw(12, 0, "np1dir: %f, np2dir: %f, np3dir: %f", mapvec_facing_to_radians(np1, 1), mapvec_facing_to_radians(np2, 1), mapvec_facing_to_radians(np3, 1));
+//  mvprintw(13, 0, 
+//    "n1: %f, %f, %f;\nn2: %f, %f, %f;\nn3: %f, %f, %f", 
+//    np1.x,np1.y,np1.z, np2.x,np2.y,np2.z, np3.x,np3.y,np3.z
+//  );
 
   lp1 = mapvec_rotate(lp1, mapvec_zero, faceAngle, 1);
   lp2 = mapvec_rotate(lp2, mapvec_zero, faceAngle, 1);
@@ -214,11 +214,11 @@ void _frustum_remake_planes(Frustum f) {
   fp2 = mapvec_rotate(fp2, mapvec_zero, faceAngle, 1);
   fp3 = mapvec_rotate(fp3, mapvec_zero, faceAngle, 1);
   
-  mvprintw(16, 0, "np1dir: %f, np2dir: %f, np3dir: %f", mapvec_facing_to_radians(np1, 1), mapvec_facing_to_radians(np2, 1), mapvec_facing_to_radians(np3, 1));
-  mvprintw(17, 0, 
-    "n1: %f, %f, %f;\nn2: %f, %f, %f;\nn3: %f, %f, %f", 
-    np1.x,np1.y,np1.z, np2.x,np2.y,np2.z, np3.x,np3.y,np3.z
-  );
+//  mvprintw(16, 0, "np1dir: %f, np2dir: %f, np3dir: %f", mapvec_facing_to_radians(np1, 1), mapvec_facing_to_radians(np2, 1), mapvec_facing_to_radians(np3, 1));
+//  mvprintw(17, 0, 
+//    "n1: %f, %f, %f;\nn2: %f, %f, %f;\nn3: %f, %f, %f", 
+//    np1.x,np1.y,np1.z, np2.x,np2.y,np2.z, np3.x,np3.y,np3.z
+//  );
   
   lp1 = mapvec_add(lp1, center);
   lp2 = mapvec_add(lp2, center);
@@ -244,10 +244,10 @@ void _frustum_remake_planes(Frustum f) {
   fp2 = mapvec_add(fp2, center);
   fp3 = mapvec_add(fp3, center);
   
-  mvprintw(20, 0, 
-    "n1: %f, %f, %f;\nn2: %f, %f, %f;\nn3: %f, %f, %f", 
-    np1.x,np1.y,np1.z, np2.x,np2.y,np2.z, np3.x,np3.y,np3.z
-  );
+//  mvprintw(20, 0, 
+//    "n1: %f, %f, %f;\nn2: %f, %f, %f;\nn3: %f, %f, %f", 
+//    np1.x,np1.y,np1.z, np2.x,np2.y,np2.z, np3.x,np3.y,np3.z
+//  );
 
   f->vol.frustum.left=plane_make_points(lp1, lp2, lp3);
   f->vol.frustum.right=plane_make_points(rp1, rp2, rp3);
@@ -356,18 +356,18 @@ void _box_remake_planes(Box b) {
   crfu = mapvec_rotate(crfu, center, faceAngle, 1);
   crfd = mapvec_rotate(crfd, center, faceAngle, 1);
   
-  mvprintw(12, 0, "facing.x: %f .y: %f .z: %f", facing.x, facing.y, facing.z);
-  mvprintw(13, 0, "faceangle: %f", faceAngle);
-  mvprintw(14, 0, "pos.x: %f .y: %f .z: %f", pos.x, pos.y, pos.z);
-  mvprintw(15, 0, "size.x: %f .y: %f .z: %f", size.x, size.y, size.z);
-  mvprintw(16, 0, "clnd.x: %f .y: %f .z: %f", clnd.x, clnd.y, clnd.z);
-  mvprintw(17, 0, "crfu.x: %f .y: %f .z: %f", crfu.x, crfu.y, crfu.z);
-  mvprintw(18, 0, "clnu.x: %f .y: %f .z: %f", clnu.x, clnu.y, clnu.z);
-  mvprintw(19, 0, "clfd.x: %f .y: %f .z: %f", clfd.x, clfd.y, clfd.z);
-  mvprintw(20, 0, "clfu.x: %f .y: %f .z: %f", clfu.x, clfu.y, clfu.z);
-  mvprintw(21, 0, "crfd.x: %f .y: %f .z: %f", crfd.x, crfd.y, crfd.z);
-  mvprintw(22, 0, "crnu.x: %f .y: %f .z: %f", crnu.x, crnu.y, crnu.z);
-  mvprintw(23, 0, "crnd.x: %f .y: %f .z: %f", crnd.x, crnd.y, crnd.z);
+  // mvprintw(12, 0, "facing.x: %f .y: %f .z: %f", facing.x, facing.y, facing.z);
+  // mvprintw(13, 0, "faceangle: %f", faceAngle);
+  // mvprintw(14, 0, "pos.x: %f .y: %f .z: %f", pos.x, pos.y, pos.z);
+  // mvprintw(15, 0, "size.x: %f .y: %f .z: %f", size.x, size.y, size.z);
+  // mvprintw(16, 0, "clnd.x: %f .y: %f .z: %f", clnd.x, clnd.y, clnd.z);
+  // mvprintw(17, 0, "crfu.x: %f .y: %f .z: %f", crfu.x, crfu.y, crfu.z);
+  // mvprintw(18, 0, "clnu.x: %f .y: %f .z: %f", clnu.x, clnu.y, clnu.z);
+  // mvprintw(19, 0, "clfd.x: %f .y: %f .z: %f", clfd.x, clfd.y, clfd.z);
+  // mvprintw(20, 0, "clfu.x: %f .y: %f .z: %f", clfu.x, clfu.y, clfu.z);
+  // mvprintw(21, 0, "crfd.x: %f .y: %f .z: %f", crfd.x, crfd.y, crfd.z);
+  // mvprintw(22, 0, "crnu.x: %f .y: %f .z: %f", crnu.x, crnu.y, crnu.z);
+  // mvprintw(23, 0, "crnd.x: %f .y: %f .z: %f", crnd.x, crnd.y, crnd.z);
   
   b->vol.box.left = plane_make_points(clfd, clfu, clnu);
   b->vol.box.right = plane_make_points(crfu, crfd, crnd);

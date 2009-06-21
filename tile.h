@@ -3,20 +3,18 @@
 
 #include "geom.h"
 
-struct _tile { //later, use struct alignment weird syntax
-  unsigned char materialQuality;      //2 bits
-  unsigned char materialCategory;     //4 bits
-  unsigned short materialType;        //10 bits
+struct _tile {
+  unsigned materialQuality  :  2;
+  unsigned materialCategory :  4;
+  unsigned materialType     : 10;
   
-  unsigned char featureType;          //8 bits
-  mapVec featureOrientation; //2 bits each x,y,z
-  unsigned int featureData;           //18 bits
-  
-  unsigned char lightingBrightness;  //2 bits
-  unsigned char lightingAttenuation; //2 bits
-  unsigned char lightingArc;         //4 bits
-  
-  unsigned char flags;               //8 bits
+  unsigned featureType      :  8;
+  unsigned featureFacing    :  3; //number of octants from 0
+  unsigned featureData      : 21;
+    
+  unsigned solid            :  1;
+  unsigned opacity          :  2;
+  unsigned flags            :  5;
 };
 typedef struct _tile * Tile;
 
@@ -25,19 +23,17 @@ Tile tile_init(
   Tile t, 
   unsigned char mq, 
   unsigned char mc, 
-  unsigned char mt,
+  unsigned short mt,
   
   unsigned char ft,
-  mapVec fo,
+  unsigned char faceOctants,
   unsigned int fd,
   
-  unsigned char lb,
-  unsigned char latt,
-  unsigned char larc,
-  
-  unsigned char flg
+  unsigned char solid,
+  unsigned char opacity,
+  unsigned flags
 );
 void tile_free(Tile t);
-int tile_light_blockage(Tile t);
+int tile_opacity(Tile t);
 
 #endif

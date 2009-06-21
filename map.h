@@ -13,7 +13,7 @@ struct _map {
   char *id;
   mapVec sz;
   unsigned short *tilemap;
-  TileSet tileset;
+  TCOD_list_t tileset;
   char ambientLight;
   TCOD_list_t exits;
   TCOD_list_t objects;
