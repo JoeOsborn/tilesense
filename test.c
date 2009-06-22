@@ -8,6 +8,7 @@
 
 /*
 next
+  some refactoring?  Lots of places seem to do the swept_bounds stuff, and it would be nice to minimize the propagation of that stuff.
   lights
   inter-room vision (option:map_get_visible tiles or objects returns a continuation or NULL.  the continuation says which volume is seeing, which rooms were seen into and through which portals, etc - this is also included with the corresponding stimulus.  The client can then get the continuation, if any, from the stimulus, and process it, potentially reporting the results back to the sensation engine (but probably Room should offer provisions for providing data for a continuation back to the client as if it were another stimulus for the same object [including returning another continuation if necessary].  cases like:
   
@@ -40,93 +41,12 @@ lit terrain--either:
 Also, if there's a way to remove some void*s from my mutually recursive dependencies, that would be great.
 */
 
-// gcc -std=c99 -ggdb -Ilibtcod/include -Ilibtcod/dependencies/SDL-1.2.12/include/ main.c map.c tile.c exit.c geom.c volume.c sensor.c light.c object.c stimulus.c bresenham3_c.c ./libtcod/libtcod.a ./libtcod/dependencies/SDL-1.2.12/lib/osx/libSDL.a ./libtcod/dependencies/SDL-1.2.12/lib/osx/libSDLmain.a ./libtcod/dependencies/libpng-1.2.31/lib/osx/libpng.a ./libtcod/dependencies/zlib-1.2.3/lib/osx/libz.a -framework Carbon -framework IOKit -framework Quartz -framework Quicktime -framework AudioUnit -framework Foundation -framework AppKit -framework OpenGL -o test && ./test
+// make -f osx/makefile test
 
 Map createmap() {
 
   Map m = map_new();
   unsigned short tileMap[] = {
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 2, 2, 2, 2, 2, 2, 2,
@@ -165,7 +85,7 @@ Map createmap() {
     };
   m = map_init(m, 
     "test_room", 
-    (mapVec){8, 8, 13}, 
+    (mapVec){8, 8, 4}, 
     tileMap,
     3
   ); 
@@ -210,7 +130,6 @@ Map createmap() {
 
 void drawtiles(Map m, unsigned char *buf, Sensor s, mapVec pos, mapVec size) {
   int index=0;
-  char vz, lt;
   unsigned char tileIndex;
   unsigned char flags;
   int drawX, drawY;
@@ -283,7 +202,6 @@ void draw_object(Stimulus st) {
 }
 
 void drawstimuli(Map m, Sensor s) {
-  Object o;
   TCOD_list_t stims = sensor_consume_stimuli(s);
   unsigned char *tiles;
   mapVec pos, size, oldPt, delta;
@@ -293,7 +211,6 @@ void drawstimuli(Map m, Sensor s) {
   }
   for(int i = 0; i < TCOD_list_size(stims); i++) {
     //this is a very naive approach that completely ignores the possibility of overdraw and 'forgets' object positions
-    #warning weird stuff happens sometimes -- when we move and send objects out of visibility, our vistile stimulus gets confounded or skipped.
     Stimulus st = TCOD_list_get(stims, i);
     stimtype type = stimulus_type(st);
     TCOD_console_print_left(NULL, i*2, 10, TCOD_BKGND_NONE, "s%i", type);
@@ -340,7 +257,6 @@ void drawmap(Map m, Object o) {
 }
 
 int main(int argc, char **argv) {
-  int ch;
   int finished = 0;
 
   char *font="libtcod/fonts/courier12x12_aa_tc.png";

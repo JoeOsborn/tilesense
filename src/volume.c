@@ -322,7 +322,6 @@ int frustum_contains_point(Frustum f, mapVec pt, float rad) {
 }
 
 void frustum_swept_bounds(Frustum f, mapVec *p, mapVec *sz) {
-  mapVec pos = f->position;
   float fovx = f->vol.frustum.fovx;
   float fovz = f->vol.frustum.fovz;
   float far = f->vol.frustum.fary;

@@ -33,6 +33,9 @@ $(TEMP)/%.o : $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -o $@ -c $< 
 
 C_OBJS=$(TEMP)/bresenham3_c.o $(TEMP)/exit.o $(TEMP)/geom.o $(TEMP)/light.o $(TEMP)/map.o $(TEMP)/object.o $(TEMP)/sensor.o $(TEMP)/stimulus.o $(TEMP)/tile.o $(TEMP)/volume.o
+HEADERS=$(INCDIR)/bresenham3.h $(INCDIR)/exit.h $(INCDIR)/geom.h $(INCDIR)/light.h $(INCDIR)/map.h $(INCDIR)/object.h $(INCDIR)/sensor.h $(INCDIR)/stimulus.h $(INCDIR)/tile.h $(INCDIR)/volume.h
+
+$(C_OBJS) : $(HEADERS)
 
 libtilesense.a : $(C_OBJS)
 	libtool -static -o $@ $(C_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(TCOD_LIBS)

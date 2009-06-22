@@ -122,6 +122,7 @@ Object sensor_visobjs_member(TCOD_list_t l, Object o) {
       return o2;
     }
   }
+  return NULL;
 }
 int sensor_visobjs_contains(TCOD_list_t l, Object o) {
   return sensor_visobjs_member(l, o) != NULL;
@@ -144,7 +145,7 @@ void sensor_push_stimulus(Sensor s, Stimulus stim) {
   mapVec pt, sz;
   unsigned char *newVis;
   unsigned char *snewVis = s->vistiles, *soldVis=s->oldVistiles;
-  unsigned char newFlags, litflags, visflags;
+  unsigned char newFlags;
   unsigned char litAndVisible;
   Object o;
   Map m = s->map;
