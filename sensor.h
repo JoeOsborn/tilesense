@@ -12,6 +12,8 @@ struct _sensor {
 
   unsigned char *vistiles;
   unsigned char *oldVistiles;
+  
+  mapVec borig, bsz;
 
   TCOD_list_t visObjects;
   TCOD_list_t oldVisObjects;
@@ -47,5 +49,7 @@ void sensor_push_stimulus(Sensor s, Stimulus stim); //this dispatches and update
 
 unsigned char *sensor_get_visible_tiles(Sensor s);
 TCOD_list_t sensor_get_visible_objects(Sensor s);
+
+void sensor_swept_bounds(Sensor s, mapVec *borig, mapVec *bsz);
 
 #endif

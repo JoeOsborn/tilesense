@@ -9,10 +9,11 @@ Sensor sensor_init(Sensor s, char *id, Volume volume) {
   s->id = malloc(strlen(id));
   s->id = strcpy(s->id, id);
   s->volume = volume;
+  volume_swept_bounds(s->volume, &(s->borig), &(s->bsz));
   
-  s->vistiles = NULL;
-  s->oldVistiles = NULL;
-    
+  s->vistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(unsigned char));
+  s->oldVistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(unsigned char));
+      
   s->visObjects = TCOD_list_new();
   s->oldVisObjects = TCOD_list_new();
 
@@ -23,8 +24,12 @@ Sensor sensor_init(Sensor s, char *id, Volume volume) {
 void sensor_free(Sensor s) {
   free(s->id);
   volume_free(s->volume);
-  free(s->vistiles);
-  free(s->oldVistiles);
+  if(s->vistiles) {
+    free(s->vistiles);
+  }
+  if(s->oldVistiles) {
+    free(s->oldVistiles);
+  }
   TCOD_list_delete(s->visObjects);
   TCOD_list_delete(s->oldVisObjects);
 
@@ -39,6 +44,7 @@ mapVec sensor_position(Sensor s) {
 }
 void sensor_set_position(Sensor s, mapVec p) {
   volume_set_position(s->volume, p);
+  volume_swept_bounds(s->volume, &(s->borig), NULL);
 }
 mapVec sensor_facing(Sensor s) {
   return volume_facing(s->volume);
@@ -51,15 +57,6 @@ void sensor_set_owner(Sensor s, Object o) {
 }
 void sensor_set_map(Sensor s, Map m) {
   s->map = m;
-  mapVec sz = map_size(m);
-  if(s->vistiles) {
-    free(s->vistiles);
-  }
-  if(s->oldVistiles) {
-    free(s->oldVistiles);
-  }
-  s->vistiles = calloc(sz.x*sz.y*sz.z, sizeof(unsigned char));
-  s->oldVistiles = calloc(sz.x*sz.y*sz.z, sizeof(unsigned char));
 }
 
 void sensor_move(Sensor s, mapVec delta) {
@@ -74,8 +71,12 @@ void sensor_sense(Sensor s) {
   unsigned char *temp = s->vistiles;
   s->vistiles = s->oldVistiles; // tiles from two senses 
   s->oldVistiles = temp;
-  map_get_visible_tiles(m, s->vistiles, s->volume);
-  Stimulus vistiles = stimulus_init_tile_vis_change(stimulus_new(), s->vistiles, mapvec_zero, map_size(m));
+  
+  mapVec pos=s->borig, sz=s->bsz;
+  map_get_visible_tiles(m, s->vistiles, s->volume, pos, sz);
+  Stimulus vistiles = stimulus_init_tile_vis_change(stimulus_new(), s->vistiles, pos, sz);
+  TCOD_console_print_left(NULL, 0, 20, TCOD_BKGND_NONE, "p {%f, %f, %f}, s {%f, %f, %f}", pos.x, pos.y, pos.z, sz.x, sz.y, sz.z);
+  
   TCOD_list_push(s->stimuli, vistiles);
   
   TCOD_list_t oldObjList = s->visObjects; //one ago
@@ -83,7 +84,7 @@ void sensor_sense(Sensor s) {
   TCOD_list_clear(s->visObjects);
   s->oldVisObjects = oldObjList;
   
-  map_get_visible_objects(m, s->visObjects, s->vistiles);
+  map_get_visible_objects(m, s->visObjects, s->vistiles, pos, sz);
   //remove the old objects
   Object o;
   mapVec pt;
@@ -92,8 +93,6 @@ void sensor_sense(Sensor s) {
   for(int i = 0; i < TCOD_list_size(s->oldVisObjects); i++) {
     o = TCOD_list_get(s->oldVisObjects, i);
     if(!TCOD_list_contains(s->visObjects, o)) { //not visible anymore
-      pt = object_position(o);
-      index = map_tile_index(m, pt.x, pt.y, pt.z);
       visobj = stimulus_init_obj_vis_change(stimulus_new(), o, 0x00);
       TCOD_list_push(s->stimuli, visobj);
     }
@@ -103,7 +102,7 @@ void sensor_sense(Sensor s) {
     o = TCOD_list_get(s->visObjects, i);
     if(!TCOD_list_contains(s->oldVisObjects, o)) { //not visible before
       pt = object_position(o);
-      index = map_tile_index(m, pt.x, pt.y, pt.z);
+      index = tile_index(pt.x, pt.y, pt.z, map_size(m), pos, sz);
       visobj = stimulus_init_obj_vis_change(stimulus_new(), o, s->vistiles[index]);
       TCOD_list_push(s->stimuli, visobj);
     }
@@ -148,6 +147,7 @@ void sensor_push_stimulus(Sensor s, Stimulus stim) {
   unsigned char litAndVisible;
   Object o;
   Map m = s->map;
+  mapVec borig=s->borig, bsz=s->bsz;
   switch(stimulus_type(stim)) {
     case StimTileLitChange:
     case StimTileVisChange:
@@ -157,10 +157,10 @@ void sensor_push_stimulus(Sensor s, Stimulus stim) {
       for(int z = pt.z; z < pt.z+sz.z; z++) {
         for(int y = pt.y; y < pt.y+sz.y; y++) {
           for(int x = pt.x; x < pt.x+sz.x; x++) {
-            int stimIndex = tile_index(x, y, z, sz);
-            int fullIndex = map_tile_index(m, x, y, z);
-            soldVis[fullIndex] = snewVis[fullIndex];
-            snewVis[fullIndex] = newVis[stimIndex];
+            int stimIndex = tile_index(x, y, z, map_size(m), pt, sz);
+            int visIndex = tile_index(x, y, z, map_size(m), borig, bsz);
+            soldVis[visIndex] = snewVis[visIndex];
+            snewVis[visIndex] = newVis[stimIndex];
           }
         }
       }
@@ -202,4 +202,13 @@ unsigned char *sensor_get_visible_tiles(Sensor s) {
 
 TCOD_list_t sensor_get_visible_objects(Sensor s) {
   return s->visObjects;
+}
+
+void sensor_swept_bounds(Sensor s, mapVec *borig, mapVec *bsz) {
+  if(borig) {
+    *borig = s->borig;
+  }
+  if(bsz) {
+    *bsz = s->bsz;
+  }
 }

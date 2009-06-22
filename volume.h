@@ -8,7 +8,7 @@ struct _frustum {
   Plane left, right, up, down, near, far;
   int fovx, fovz;
   int neary, fary;
-  };
+};
 struct _sphere {
   float radius;
 };
@@ -53,6 +53,8 @@ void volume_set_position(Volume v, mapVec p);
 mapVec volume_facing(Volume v);
 void volume_set_facing(Volume v, mapVec face);
 
+void volume_swept_bounds(Volume v, mapVec *pos, mapVec *sz);
+
 Frustum frustum_new();
 Frustum frustum_init(Frustum f, mapVec pos, mapVec facing, int fovx, int fovz, int near, int far);
 Frustum frustum_copy(Frustum f);
@@ -64,6 +66,8 @@ mapVec frustum_facing(Frustum f);
 void frustum_set_facing(Frustum f, mapVec face);
 int frustum_contains_point(Frustum f, mapVec pt, float radius);
 
+void frustum_swept_bounds(Frustum f, mapVec *pos, mapVec *sz);
+
 Sphere sphere_new();
 Sphere sphere_init(Sphere s, mapVec pos, float radius);
 Sphere sphere_copy(Sphere s);
@@ -72,6 +76,8 @@ void sphere_free(Sphere s);
 mapVec sphere_position(Sphere s);
 void sphere_set_position(Sphere s, mapVec pt);
 int sphere_contains_point(Sphere s, mapVec pt, float radius);
+
+void sphere_swept_bounds(Sphere s, mapVec *pos, mapVec *sz);
 
 Box box_new();
 Box box_init(Box b, mapVec pos, mapVec facing, mapVec size);
@@ -85,6 +91,8 @@ mapVec box_facing(Box b);
 void box_set_facing(Box b, mapVec face);
 int box_contains_point(Box b, mapVec pt, float radius);
 
+void box_swept_bounds(Box b, mapVec *pos, mapVec *sz);
+
 AABox aabox_new();
 AABox aabox_init(AABox b, mapVec pos, mapVec size);
 AABox aabox_copy(AABox b);
@@ -94,5 +102,7 @@ mapVec aabox_position(AABox b);
 void aabox_set_position(AABox b, mapVec pt);
 mapVec aabox_size(AABox b);
 int aabox_contains_point(AABox b, mapVec pt, float radius);
+
+void aabox_swept_bounds(AABox b, mapVec *pos, mapVec *sz);
 
 #endif

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libtcod.h>
 
 Volume _volume_new() {
   return malloc(sizeof(struct _volume));
@@ -127,6 +128,25 @@ void volume_set_facing(Volume v, mapVec face)
       break;
     case VolumeTypeAABox:
 //      aabox_set_facing(v, face);
+      break;
+    default:
+      break;
+  }
+}
+void volume_swept_bounds(Volume v, mapVec *pos, mapVec *sz)
+{
+  switch(v->type) {
+    case VolumeTypeFrustum:
+      frustum_swept_bounds(v, pos, sz);
+      break;
+    case VolumeTypeSphere:
+      sphere_swept_bounds(v, pos, sz);
+      break;
+    case VolumeTypeBox:
+      box_swept_bounds(v, pos, sz);
+      break;
+    case VolumeTypeAABox:
+      aabox_swept_bounds(v, pos, sz);
       break;
     default:
       break;
@@ -301,6 +321,30 @@ int frustum_contains_point(Frustum f, mapVec pt, float rad) {
   return 1;
 }
 
+void frustum_swept_bounds(Frustum f, mapVec *p, mapVec *sz) {
+  mapVec pos = f->position;
+  float fovx = f->vol.frustum.fovx;
+  float fovz = f->vol.frustum.fovz;
+  float far = f->vol.frustum.fary;
+  
+  float xang = (ONE16TH*fovx);
+  float txang = tan(xang);
+  float dxf = far;
+  float dyf = txang*far;
+  
+  float zang = (ONE16TH*fovz);
+  float dzf = (tan(zang)*far);
+  
+  float maxDim = MAX(dxf, dyf);
+  
+  if(p) {
+    *p = mapvec_subtract(f->position, (mapVec){maxDim, maxDim, dzf});
+  }
+  if(sz) {
+    *sz = (mapVec){maxDim*2, maxDim*2, dzf*2};
+  }
+}
+
 Sphere sphere_new() {
   return _volume_new();
 }
@@ -326,6 +370,16 @@ void sphere_set_position(Sphere s, mapVec p) {
 }
 int sphere_contains_point(Sphere s, mapVec pt, float radius) {
   return (fabs(mapvec_distance(s->position, pt)) - radius) < s->vol.sphere.radius;
+}
+
+void sphere_swept_bounds(Sphere s, mapVec *pos, mapVec *sz) {
+  float radius = s->vol.sphere.radius;
+  if(pos) {
+    *pos = mapvec_subtract_scalar(s->position, radius);
+  }
+  if(sz) {
+    *sz = (mapVec){radius*2, radius*2, radius*2};
+  }
 }
 
 void _box_remake_planes(Box b) {
@@ -418,6 +472,17 @@ int box_contains_point(Box b, mapVec pt, float radius) {
   return frustum_contains_point(b, pt, radius);
 }
 
+void box_swept_bounds(Box b, mapVec *pos, mapVec *sz) {
+  mapVec bsz = b->vol.box.size;
+  float maxDim = MAX(bsz.x, bsz.y);
+  if(pos) {
+    *pos = mapvec_subtract(b->position, mapvec_multiply_scalar((mapVec){maxDim, maxDim, bsz.z}, 0.5));
+  }
+  if(sz) {
+    *sz = (mapVec){maxDim, maxDim, bsz.z};
+  }
+}
+
 AABox aabox_new() {
   return box_new();
 }
@@ -444,4 +509,13 @@ mapVec aabox_size(AABox b) {
 }
 int aabox_contains_point(AABox b, mapVec pt, float radius) {
   return box_contains_point(b, pt, radius);
+}
+
+void aabox_swept_bounds(AABox b, mapVec *pos, mapVec *sz) {
+  if(pos) {
+    *pos = mapvec_subtract(b->position, mapvec_multiply_scalar(b->vol.box.size, 0.5));
+  }
+  if(sz) {
+    *sz = b->vol.box.size;
+  }
 }

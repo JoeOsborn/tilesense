@@ -29,6 +29,10 @@ mapVec mapvec_subtract(mapVec v1, mapVec v2) {
   return (mapVec){v1.x-v2.x, v1.y-v2.y, v1.z-v2.z};
 }
 
+mapVec mapvec_subtract_scalar(mapVec v1, double d) {
+  return (mapVec){v1.x-d, v1.y-d, v1.z-d};
+}
+
 mapVec mapvec_multiply_scalar(mapVec v, double scalar) {
   return (mapVec){v.x*scalar, v.y*scalar, v.z*scalar};
 }
@@ -73,8 +77,26 @@ mapVec mapvec_turn_facing(mapVec f, int amt) {
   return mapvec_normalize(mapvec_rotate(f, mapvec_zero, rads, 1));
 }
 
-int tile_index(int x, int y, int z, mapVec sz) {
-  return sz.x*sz.y*(sz.z-z-1)+sz.x*y+x;
+int tile_index(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz) {
+  //bail on stuff outside of the map
+  if(x < 0 || y < 0 || z < 0) {
+    return -1;
+  }
+  if(x >= sz.x || y >= sz.y || z >= sz.z) {
+    return -1;
+  }
+  //bail on stuff outside of bounds
+  if(x < borig.x || y < borig.y || z < borig.z) {
+    return -1;
+  }
+  if(x >= borig.x + bsz.x || y >= borig.y + bsz.y || z >= borig.z + bsz.z) {
+    return -1;
+  }
+  //convert from map coord space to bounds coord space
+  int rx = x-borig.x;
+  int ry = y-borig.y;
+  int rz = z-borig.z;
+  return bsz.x*bsz.y*(bsz.z-rz-1)+bsz.x*ry+rx;
 }
 
 Plane plane_make(float a, float b, float c, float d) {

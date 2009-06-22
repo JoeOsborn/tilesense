@@ -4,6 +4,8 @@
 #define PI 3.14159
 #define ONE16TH ((2*PI)/16.0)
 
+#define CLIP(b, a, c) (b < a ? a : (b > c ? c : b))
+
 typedef enum {
   NegativeHalfSpace=-1,
   OnPlane=0,
@@ -21,6 +23,7 @@ mapVec mapvec_normalize(mapVec v);
 mapVec mapvec_add(mapVec v1, mapVec v2);
 mapVec mapvec_add_scalar(mapVec v1, double d);
 mapVec mapvec_subtract(mapVec v1, mapVec v2);
+mapVec mapvec_subtract_scalar(mapVec v1, double d);
 mapVec mapvec_multiply_scalar(mapVec v, double scalar);
 mapVec mapvec_divide_scalar(mapVec v, double scalar);
 float mapvec_distance(mapVec p1, mapVec p2);
@@ -28,7 +31,7 @@ float mapvec_facing_to_radians(mapVec f, int aboutZ);
 mapVec mapvec_rotate(mapVec p, mapVec center, float rads, int aboutZ);
 mapVec mapvec_turn_facing(mapVec facing, int amt);
 
-int tile_index(int x, int y, int z, mapVec sz);
+int tile_index(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz);
 
 typedef struct {
   float a,b,c,d;

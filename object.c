@@ -126,13 +126,16 @@ void object_note_object_moved(Object o, Object o2, mapVec delta) {
   unsigned short oldMapItem, newMapItem;
   unsigned char newFlags, oldVis, newVis;
   unsigned char *vistiles;
+  
+  mapVec bpt, bsz;  
   Stimulus movestim;
   Sensor s;
   for(int i = 0; i < object_sensor_count(o); i++) {
     s = object_get_sensor(o,i);
+    sensor_swept_bounds(s, &bpt, &bsz);
     vistiles = sensor_get_visible_tiles(s);
-    oldIndex = map_tile_index(m, oldPos.x, oldPos.y, oldPos.z);
-    newIndex = map_tile_index(m, newPos.x, newPos.y, newPos.z);
+    oldIndex = tile_index(oldPos.x, oldPos.y, oldPos.z, map_size(m), bpt, bsz);
+    newIndex = tile_index(newPos.x, newPos.y, newPos.z, map_size(m), bpt, bsz);
     oldMapItem = vistiles[oldIndex];
     newMapItem = vistiles[newIndex];
     oldVis = map_item_visible(oldMapItem);

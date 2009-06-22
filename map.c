@@ -125,31 +125,34 @@ void map_move_object(Map m, char *id, mapVec delta) {
 void map_turn_object(Map m, char *id, int amt) {
   Object o = map_get_object_named(m, id), o2;
   object_turn(o, amt);
-  #warning send a stimulus to all sensors that can see this object
   for(int i = 0; i < map_object_count(m); i++) {
     o2 = map_get_object(m, i);
     if(o2 != o) {
-      //??
+      #warning send a stimulus to all sensors that can see this object
     }
   }
 }
 
-void map_get_region(Map m, unsigned short *flags, mapVec start, mapVec end) {
-  int readCount = 0;
+void map_get_region(Map m, unsigned short *flags, mapVec start, mapVec end, mapVec bpt, mapVec bsz) {
+  int index, destIndex;
   mapVec size = m->sz;
   for(int z = start.z; z <= end.z; z++) {
     for(int y = start.y; y <= end.y; y++) {
       for(int x = start.x; x <= end.x; x++) {
-        int index = size.x*size.y*(size.z-z-1)+size.x*y+x;
-        flags[readCount] = MAP_FLAGS(m->tilemap[index]);
-        readCount++;
+        index = map_tile_index(m, x, y, z);
+        destIndex = tile_index(x, y, z, size, bpt, bsz);
+        flags[destIndex] = MAP_FLAGS(m->tilemap[index]);
       }
     }
   }
 }
 
 int map_tile_index(Map m, int x, int y, int z) {
-  return tile_index(x, y, z, m->sz);
+  return tile_index(x, y, z, m->sz, mapvec_zero, m->sz);
+}
+
+unsigned char map_tile_at(Map m, int x, int y, int z) {
+  return map_tile_at_index(m, map_tile_index(m, x, y, z));
 }
 
 unsigned char map_tile_at_index(Map m, int i) {
@@ -160,7 +163,7 @@ Tile map_get_tiledef(Map m, int i) {
   return TCOD_list_get(m->tileset, i);
 }
 
-unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd) {
+unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz) {
   //try to trace back to position through tiles that allow light to pass (flag bit 2)  
   int x, y, z;
   if(TCOD_line3_step_mt(&x, &y, &z, bd)) {
@@ -168,6 +171,7 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
     return 0x03;
   }
   unsigned int index = map_tile_index(m, x, y, z);
+  unsigned int destIndex = tile_index(x, y, z, map_size(m), bpos, bsz);
   unsigned short mapItem = m->tilemap[index];
   unsigned char flg = MAP_FLAGS(mapItem);
   unsigned char tileIndex   = MAP_IND(mapItem);
@@ -187,48 +191,62 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
     return vis; //it's visible, go ahead!
   }
   //otherwise, we're tracing through a tile with unknown visibility.  keep going!
-  unsigned char recviz = map_trace_light(m, flags, bd);
-  flags[index] = MAP_SET_LOS(flags[index], recviz); //update that tile with its visibility
+  unsigned char recviz = map_trace_light(m, flags, bd, bpos, bsz);
+  flags[destIndex] = MAP_SET_LOS(flags[destIndex], recviz); //update that tile with its visibility
   //we must be the same visibility.
+  //m->tilemap[index] = MAP_SET_FLAGS(mapItem, flags[destIndex]);
   
   return recviz;
 }
 //refactor to support an interface that includes a Light and updates the lit flags rather than the viz flags.
-void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol) {
+void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos, mapVec bsz) {
   //int times = 0;
   mapVec position = volume_position(vol);
   mapVec size = m->sz, cur;
-  unsigned int index;
+  unsigned int index, destIndex;
   unsigned char volFlags, newFlags, los;
   unsigned short mapItem;
-  for(int z = 0; z < size.z; z++) {
-    for(int y = 0; y < size.y; y++) {
-      for(int x = 0; x < size.x; x++) {
+  
+  int zstart = CLIP(bpos.z, 0, size.z);
+  int zend = CLIP(bpos.z+bsz.z, 0, size.z);
+  int ystart = CLIP(bpos.y, 0, size.y);
+  int yend = CLIP(bpos.y+bsz.y, 0, size.y);
+  int xstart = CLIP(bpos.x, 0, size.x);
+  int xend = CLIP(bpos.x+bsz.x, 0, size.x);
+  
+  for(int z = zstart; z < zend; z++) {
+    for(int y = ystart; y < yend; y++) {
+      for(int x = xstart; x < xend; x++) {
         index = map_tile_index(m, x, y, z);
+        destIndex = tile_index(x, y, z, size, bpos, bsz);
+
         mapItem   = m->tilemap[index];
         volFlags  = MAP_VOL(mapItem);
-
-        newFlags = MAP_FLAGS(mapItem);
         
-        //vis is 0 0 if unsure, 1 1 if known viz, 1 0 if edge of viz, 0 1 if known inviz.
+        newFlags  = MAP_FLAGS(mapItem);
+        
+        //vol is 0 0 if unsure, 1 1 if known vol, 1 0 if edge of vol, 0 1 if known out-of-vol.
         if(volFlags == 0x00) {
           cur = (mapVec){x, y, z};
           //if it's within the volume
           if(volume_contains_point(vol, cur, 0.0)) {
             //this is a recursive fn that is also destructive to flags.  keep that in mind!
-            TCOD_bresenham3_data_t bd;
-            TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
-            los = map_trace_light(m, flags, &bd);
+            //TODO later, see if I can take advantage of flags[] as a scratchpad and store the results of LOS searches.
+            //if(MAP_LOS(newFlags) == 0x00) {
+              TCOD_bresenham3_data_t bd;
+              TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
+              los = map_trace_light(m, flags, &bd, bpos, bsz);
 
+              newFlags = MAP_SET_LOS(newFlags, los);
+              //fill in the lit flags too!  easy squeasy!!
+              //litLevel = map_light_level(m, x, y, z); //fn assembles it from all the lights in the scene, with their cached light info (still needs to get updated when lights move, etc -- that probably updates an array of tileIndex->{lightID,lightLevel}-list?  pretty memory-intensive, that, but fairly easy on the processor and correct.  for bonus points, the first entry in the list could hold the aggregate!)
+              //newFlags = MAP_SET_LIT(newFlags, litLevel);
+            //}
             newFlags = MAP_SET_VOL(newFlags, 0x03);
-            newFlags = MAP_SET_LOS(newFlags, los);
-            //fill in the lit flags too!  easy squeasy!!
-            //litLevel = map_light_level(m, x, y, z); //fn assembles it from all the lights in the scene, with their cached light info (still needs to get updated when lights move, etc -- that probably updates an array of tileIndex->{lightID,lightLevel}-list?  pretty memory-intensive, that, but fairly easy on the processor and correct.  for bonus points, the first entry in the list could hold the aggregate!)
-            //newFlags = MAP_SET_LIT(newFlags, litLevel);
           } else {
             newFlags = MAP_SET_VOL(newFlags, 0x01);
           }
-          flags[index] = newFlags;
+          flags[destIndex] = newFlags;
         }
       }
     }
@@ -236,7 +254,7 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol) {
   //what about the exits?
 }
 
-void map_get_visible_objects(Map m, TCOD_list_t objs, unsigned char *visflags) {
+void map_get_visible_objects(Map m, TCOD_list_t objs, unsigned char *visflags, mapVec bpt, mapVec bsz) {
   unsigned char flags;
   int index;
   mapVec pt;
@@ -244,7 +262,7 @@ void map_get_visible_objects(Map m, TCOD_list_t objs, unsigned char *visflags) {
   for(int i = 0; i < map_object_count(m); i++) {
     o = map_get_object(m, i);
     pt = object_position(o);
-    index = map_tile_index(m, pt.x, pt.y, pt.z);
+    index = tile_index(pt.x, pt.y, pt.z, map_size(m), bpt, bsz);
     flags = visflags[index];
     if(map_item_visible(flags)) {
       TCOD_list_push(objs, o);
