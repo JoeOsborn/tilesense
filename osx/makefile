@@ -1,10 +1,35 @@
 SRCDIR=./src
 INCDIR=./include
 CC=gcc
-CPP=g++
 FLAGS=-ggdb -std=c99
-TEMP=/tmp
-.SUFFIXES: .o .h .c .hpp .cpp
+.SUFFIXES: .o .h .c
+
+C_OBJS=\
+  $(SRCDIR)/bresenham3_c.o \
+  $(SRCDIR)/exit.o \
+  $(SRCDIR)/geom.o \
+  $(SRCDIR)/light.o \
+  $(SRCDIR)/map.o \
+  $(SRCDIR)/object.o \
+  $(SRCDIR)/sensor.o \
+  $(SRCDIR)/stimulus.o \
+  $(SRCDIR)/tile.o \
+  $(SRCDIR)/volume.o
+
+HEADERS=\
+  $(INCDIR)/bresenham3.h \
+  $(INCDIR)/exit.h \
+  $(INCDIR)/geom.h \
+  $(INCDIR)/light.h \
+  $(INCDIR)/map.h \
+  $(INCDIR)/object.h \
+  $(INCDIR)/sensor.h \
+  $(INCDIR)/stimulus.h \
+  $(INCDIR)/tile.h \
+  $(INCDIR)/volume.h
+
+TEST_OBJS=\
+  test.o
 
 #dependencies
 # SDL
@@ -29,22 +54,16 @@ TCOD_LIBS=$(TCOD_DIR)/libtcod.a
 
 CFLAGS=$(FLAGS) -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
 
-$(TEMP)/%.o : $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ -c $< 
-
-C_OBJS=$(TEMP)/bresenham3_c.o $(TEMP)/exit.o $(TEMP)/geom.o $(TEMP)/light.o $(TEMP)/map.o $(TEMP)/object.o $(TEMP)/sensor.o $(TEMP)/stimulus.o $(TEMP)/tile.o $(TEMP)/volume.o
-HEADERS=$(INCDIR)/bresenham3.h $(INCDIR)/exit.h $(INCDIR)/geom.h $(INCDIR)/light.h $(INCDIR)/map.h $(INCDIR)/object.h $(INCDIR)/sensor.h $(INCDIR)/stimulus.h $(INCDIR)/tile.h $(INCDIR)/volume.h
-
 $(C_OBJS) : $(HEADERS)
 
 libtilesense.a : $(C_OBJS)
 	libtool -static -o $@ $(C_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(TCOD_LIBS)
 
-$(TEMP)/test.o : test.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+$(TEST_OBJS) : $(HEADERS)
 
-test : libtilesense.a $(TEMP)/test.o
-	$(CC) $(CFLAGS) -o $@ $(TEMP)/test.o $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(TCOD_LIBS) libtilesense.a
+test : libtilesense.a test.o
+	$(CC) $(CFLAGS) -o $@ $(TEST_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(TCOD_LIBS) libtilesense.a
 
 clean :
-	\rm -f $(C_OBJS) test libtilesense.a
+	rm -f $(C_OBJS) $(TEST_OBJS) test libtilesense.a
+	rm -rf test.dSYM
