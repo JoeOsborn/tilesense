@@ -41,9 +41,9 @@ Stimulus stimulus_init_generic(Stimulus s) {
 }
 
 Stimulus stimulus_init_tile_sight_change(Stimulus s, unsigned char *newTiles, mapVec position, mapVec size, stimtype type) {
-  int mapSize = size.x*size.y*size.z*sizeof(unsigned char);
-  s->stim.tile_sight_change.newTiles = malloc(mapSize);
-  memcpy(s->stim.tile_sight_change.newTiles, newTiles, mapSize);
+  int stimSz = size.x*size.y*size.z*sizeof(unsigned char);
+  s->stim.tile_sight_change.newTiles = malloc(stimSz*sizeof(unsigned char));
+  memcpy(s->stim.tile_sight_change.newTiles, newTiles, stimSz);
   s->stim.tile_sight_change.position = position;
   s->stim.tile_sight_change.size = size;
   return stimulus_init_type(s, type);

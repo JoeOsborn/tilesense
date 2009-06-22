@@ -9,7 +9,6 @@
 /*
 next
   lights
-  memory optimization (view volume bounding box rather than map-sized storage)
   inter-room vision (option:map_get_visible tiles or objects returns a continuation or NULL.  the continuation says which volume is seeing, which rooms were seen into and through which portals, etc - this is also included with the corresponding stimulus.  The client can then get the continuation, if any, from the stimulus, and process it, potentially reporting the results back to the sensation engine (but probably Room should offer provisions for providing data for a continuation back to the client as if it were another stimulus for the same object [including returning another continuation if necessary].  cases like:
   
   ####     ####
@@ -55,6 +54,87 @@ Map createmap() {
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
     
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 0, 0, 0, 0, 0, 0, 2,
@@ -85,7 +165,7 @@ Map createmap() {
     };
   m = map_init(m, 
     "test_room", 
-    (mapVec){8, 8, 4}, 
+    (mapVec){8, 8, 13}, 
     tileMap,
     3
   ); 
@@ -213,6 +293,7 @@ void drawstimuli(Map m, Sensor s) {
   }
   for(int i = 0; i < TCOD_list_size(stims); i++) {
     //this is a very naive approach that completely ignores the possibility of overdraw and 'forgets' object positions
+    #warning weird stuff happens sometimes -- when we move and send objects out of visibility, our vistile stimulus gets confounded or skipped.
     Stimulus st = TCOD_list_get(stims, i);
     stimtype type = stimulus_type(st);
     TCOD_console_print_left(NULL, i*2, 10, TCOD_BKGND_NONE, "s%i", type);
@@ -250,7 +331,6 @@ void drawstimuli(Map m, Sensor s) {
 }
 
 void drawmap(Map m, Object o) {
-//  sensor_sense(s);
   Sensor s;
   for(int i = 0; i < object_sensor_count(o); i++) {
     s = object_get_sensor(o, i);
@@ -324,6 +404,7 @@ int main(int argc, char **argv) {
   // object_add_sensor(playerObj, basicSense);
     
   object_sense(playerObj);
+  TCOD_sys_set_fps(30);
 	TCOD_console_set_foreground_color(NULL,TCOD_white);
   drawmap(m, playerObj);
   TCOD_console_flush();
@@ -333,10 +414,12 @@ int main(int argc, char **argv) {
 		/* did the user hit a key ? */
 		key = TCOD_console_check_for_keypress(TCOD_KEY_PRESSED);
 		if(key.vk != TCODK_NONE) {
-		         TCOD_console_clear(NULL);
+		  TCOD_console_clear(NULL);
 		}
 		drawmap(m, playerObj);
     TCOD_console_print_left(NULL, object_position(playerObj).x*2, object_position(playerObj).y, TCOD_BKGND_NONE,"@");
+		/* update the game screen */
+		TCOD_console_flush();
     if(key.vk == TCODK_RIGHT) {
       map_turn_object(m, "@", 1);
     } else if(key.vk == TCODK_LEFT) {
@@ -374,8 +457,6 @@ int main(int argc, char **argv) {
           break;
   		}
     }
-		/* update the game screen */
-		TCOD_console_flush();
 	} while (!finished && !TCOD_console_is_window_closed());
   return 0;
 }

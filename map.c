@@ -108,9 +108,7 @@ int map_object_count(Map m) {
 
 void map_move_object(Map m, char *id, mapVec delta) {  
   Object o = map_get_object_named(m, id), o2;
-  //update the object's sensors?
-  object_sense(o);
-  
+  //the move updates its sensors
   object_move(o, delta);
   //update any sensors that might see it now
   for(int i = 0; i < map_object_count(m); i++) {
@@ -173,9 +171,9 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   unsigned int index = map_tile_index(m, x, y, z);
   unsigned int destIndex = tile_index(x, y, z, map_size(m), bpos, bsz);
   unsigned short mapItem = m->tilemap[index];
-  unsigned char flg = MAP_FLAGS(mapItem);
+  unsigned char flg = flags[destIndex];
   unsigned char tileIndex   = MAP_IND(mapItem);
-  unsigned char vis         = MAP_LOS(mapItem);
+  unsigned char vis         = MAP_LOS(flg);
   Tile tileDef              = map_get_tiledef(m, tileIndex);
   unsigned char blockage    = tile_opacity(tileDef);
   if(blockage == 0x03 || vis == 0x01) {
@@ -194,7 +192,6 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   unsigned char recviz = map_trace_light(m, flags, bd, bpos, bsz);
   flags[destIndex] = MAP_SET_LOS(flags[destIndex], recviz); //update that tile with its visibility
   //we must be the same visibility.
-  //m->tilemap[index] = MAP_SET_FLAGS(mapItem, flags[destIndex]);
   
   return recviz;
 }
@@ -204,7 +201,7 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
   mapVec position = volume_position(vol);
   mapVec size = m->sz, cur;
   unsigned int index, destIndex;
-  unsigned char volFlags, newFlags, los;
+  unsigned char volFlags, litFlags, newFlags, los;
   unsigned short mapItem;
   
   int zstart = CLIP(bpos.z, 0, size.z);
@@ -221,31 +218,27 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
         destIndex = tile_index(x, y, z, size, bpos, bsz);
 
         mapItem   = m->tilemap[index];
-        volFlags  = MAP_VOL(mapItem);
-        
-        newFlags  = MAP_FLAGS(mapItem);
+        litFlags  = MAP_LIT(mapItem);    
+        newFlags  = flags[destIndex];
+        newFlags  = MAP_SET_LIT(newFlags, litFlags);
         
         //vol is 0 0 if unsure, 1 1 if known vol, 1 0 if edge of vol, 0 1 if known out-of-vol.
         if(volFlags == 0x00) {
           cur = (mapVec){x, y, z};
           //if it's within the volume
           if(volume_contains_point(vol, cur, 0.0)) {
-            //this is a recursive fn that is also destructive to flags.  keep that in mind!
-            //TODO later, see if I can take advantage of flags[] as a scratchpad and store the results of LOS searches.
-            //if(MAP_LOS(newFlags) == 0x00) {
-              TCOD_bresenham3_data_t bd;
-              TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
-              los = map_trace_light(m, flags, &bd, bpos, bsz);
-
-              newFlags = MAP_SET_LOS(newFlags, los);
-              //fill in the lit flags too!  easy squeasy!!
-              //litLevel = map_light_level(m, x, y, z); //fn assembles it from all the lights in the scene, with their cached light info (still needs to get updated when lights move, etc -- that probably updates an array of tileIndex->{lightID,lightLevel}-list?  pretty memory-intensive, that, but fairly easy on the processor and correct.  for bonus points, the first entry in the list could hold the aggregate!)
-              //newFlags = MAP_SET_LIT(newFlags, litLevel);
-            //}
             newFlags = MAP_SET_VOL(newFlags, 0x03);
           } else {
             newFlags = MAP_SET_VOL(newFlags, 0x01);
           }
+          flags[destIndex] = newFlags;
+        }
+        if(MAP_LOS(newFlags) == 0x00) {
+          TCOD_bresenham3_data_t bd;
+          TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
+          //this is a recursive fn that is also destructive to flags.  keep that in mind!
+          los = map_trace_light(m, flags, &bd, bpos, bsz);
+          newFlags = MAP_SET_LOS(newFlags, los);
           flags[destIndex] = newFlags;
         }
       }
