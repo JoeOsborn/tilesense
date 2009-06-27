@@ -293,8 +293,10 @@ int main(int argc, char **argv) {
   assert(flagset_get_raw(fs, 0, 4) == 4);
   flagset_set_raw(fs, 4, 8, 113);
   assert(flagset_get_raw(fs, 4, 8) == 113);
-  flagset_set_raw_large(fs, 0, 12, 53900);
-  assert(flagset_get_raw_large(fs, 0, 12) == 53900);  
+  //1100 0001  0010
+  flagset_set_raw_large(fs, 0, 12, 3090);
+  assert(flagset_get_raw_large(fs, 0, 12) == 3090);
+  flagset_free(fs);
   
   int finished = 0;
 

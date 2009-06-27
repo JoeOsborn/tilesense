@@ -26,6 +26,7 @@ unsigned int flagset_get_raw_large(Flagset fs, unsigned long leftOffset, int bit
 unsigned char flagset_get_raw(Flagset fs, unsigned long leftOffset, int bits);
 //void flagset_set_path(Flagset fs, FlagSchema fsc, char *key, unsigned char value);
 //void flagset_set_index(Flagset fs, FlagSchema fsc, int index, unsigned char value);
+void flagset_set_raw_large(Flagset fs, unsigned long leftOffset, int bits, unsigned int value);
 void flagset_set_raw(Flagset fs, unsigned long leftOffset, int bits, unsigned char value);
 
 #endif

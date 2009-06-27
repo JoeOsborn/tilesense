@@ -34,7 +34,7 @@ unsigned int flagset_get_raw_large(Flagset fs, unsigned long leftOffset, int bit
   unsigned long offset = leftOffset;
   int curBits = leftBits;
   do {
-    value += (unsigned int)flagset_get_raw(fs, offset, curBits) << (bits-leftBits)-8*bytes;
+    value += (unsigned int)flagset_get_raw(fs, offset, curBits) << ((bits-leftBits)-8*bytes);
     offset += curBits;
     curBits = 8;
     bytes++;
@@ -60,7 +60,6 @@ unsigned char flagset_get_raw(Flagset fs, unsigned long leftOffset, int bits) {
     unsigned char mask = (unsigned char)(0xFF << bitOff) >> (unsigned char)(bitOff + (8 - readEnd)) << (unsigned char)(8 - readEnd);
     return (unsigned char)((*start) & mask) >> (unsigned char)(8 - readEnd);
   } else {
-    unsigned char leftBits = 8 - bitOff;
     unsigned char rightBits = readEnd - 8;
     unsigned char leftMask = (unsigned char)(0xFF << bitOff) >> bitOff;
     unsigned char rightMask = (unsigned char)(0xFF >> (unsigned char)(8-rightBits) << (unsigned char)(8-rightBits));
@@ -70,6 +69,28 @@ unsigned char flagset_get_raw(Flagset fs, unsigned long leftOffset, int bits) {
 
 //void flagset_set_path(Flagset fs, FlagSchema fsc, char *key, void *value);
 //void flagset_set_index(Flagset fs, FlagSchema fsc, int index, void *value);
+void flagset_set_raw_large(Flagset fs, unsigned long leftOffset, int bits, unsigned int value) {
+  if(bits <= 8) {
+    flagset_set_raw(fs, leftOffset, bits, (unsigned char)value);
+  }
+  //the current byte of value
+  unsigned char curValue = 0;
+  //where in value we start reading (from the left)
+  int valOff = (sizeof(unsigned int)*4) - bits;
+  int writeOff = leftOffset;
+
+  int fullBytes = bits / 8;
+  int leftBits = bits % 8;
+
+  //write the first few bits
+  flagset_set_raw(fs, writeOff, leftBits, (unsigned char)(value >> (bits-leftBits)));
+  writeOff += leftBits;
+  //then write 8 bits at a time.
+  for(int i = 1; i <= fullBytes; i++) {
+    flagset_set_raw(fs, writeOff, 8, (unsigned char)((value >> (bits-leftBits-i*8)) & 0xFF));
+    writeOff += 8;
+  }
+}
 void flagset_set_raw(Flagset fs, unsigned long leftOffset, int bits, unsigned char value) {
   unsigned long byteOff;
   unsigned char bitOff;
@@ -83,14 +104,13 @@ void flagset_set_raw(Flagset fs, unsigned long leftOffset, int bits, unsigned ch
   unsigned char *start = (unsigned char *)fs + byteOff;
   unsigned char writeEnd = (bitOff + bits);
   if(writeEnd <= 8) {
-    unsigned char mask = (unsigned char)(0xFF << bitOff) >> (unsigned char)(bitOff + (8 - writeEnd)) << (unsigned char)(8 - writeEnd);
+    unsigned char mask = ((unsigned char)(0xFF << bitOff) >> (unsigned char)(bitOff + (8 - writeEnd))) << (unsigned char)(8 - writeEnd);
     start[0] &= ~mask;
     start[0] |= value << (8-writeEnd);
   } else {
-    unsigned char leftBits = 8 - bitOff;
     unsigned char rightBits = writeEnd - 8;
-    unsigned char leftMask = (unsigned char)(0xFF << bitOff) >> (unsigned char)(bitOff + (8 - leftBits));
-    unsigned char rightMask = (unsigned char)(0xFF >> (unsigned char)(8-rightBits) << (unsigned char)(8-rightBits));
+    unsigned char leftMask = (unsigned char)(0xFF << bitOff) >> bitOff;
+    unsigned char rightMask = ((unsigned char)(0xFF >> (unsigned char)(8-rightBits)) << (unsigned char)(8-rightBits));
     start[0] &= ~leftMask;
     start[0] |= (value >> rightBits);
     start[1] &= ~rightMask;
