@@ -7,6 +7,7 @@ FLAGS=-ggdb -std=c99
 C_OBJS=\
   $(SRCDIR)/bresenham3_c.o \
   $(SRCDIR)/exit.o \
+  $(SRCDIR)/flagset.o \
   $(SRCDIR)/geom.o \
   $(SRCDIR)/light.o \
   $(SRCDIR)/map.o \
@@ -19,6 +20,7 @@ C_OBJS=\
 HEADERS=\
   $(INCDIR)/bresenham3.h \
   $(INCDIR)/exit.h \
+  $(INCDIR)/flagset.h \
   $(INCDIR)/geom.h \
   $(INCDIR)/light.h \
   $(INCDIR)/map.h \

@@ -25,19 +25,26 @@ unsigned int flagset_get_raw_large(Flagset fs, unsigned long leftOffset, int bit
 
   unsigned char leftBits = 8 - bitOff;
   unsigned char rightBits = (bitOff+bits) % 8;
-  value += (unsigned int)flagset_get_raw(fs, bitEnd - rightBits, rightBits) << rightStart;
   //0011 0011 00110011 00110011 0011 0011 -- 24 bits from the middle -- left = 4, bits = 24
+  //left 4 -- at 4 (leftOff), read 4 (lb), shift left by 20 (24-left-8*0)
+  //next 8 -- at 4+4 (leftOff+lb), read 8, shift left by 12 (24-left-8*1)
+  //next 8 -- at 4+4+8, read 8, shift left by 4  (24-left-8*2)
+  //last 4 -- at 4+4+8+8, read 4 (rb), do not shift
+  unsigned char bytes = 0;
+  unsigned long offset = leftOffset;
+  int curBits = leftBits;
   do {
-    value += (unsigned int)flagset_get_raw(fs, leftOffset, leftBits) << remainingBits;
-  } while(remainingBits > 0);
-  value += (unsigned int)flagset_get_raw(fs, leftOffset, leftBits) << (bits-leftBits);
-  for(unsigned int i = (bits-leftBits)-8; i > 0; i-=8) {
-    value += (unsigned int)flagset_get_raw(fs, i) << i;
-  }
-  unsigned char rightBits = (bitOff + bits) % 8;
+    value += (unsigned int)flagset_get_raw(fs, offset, curBits) << (bits-leftBits)-8*bytes;
+    offset += curBits;
+    curBits = 8;
+    bytes++;
+  } while(offset < (bitEnd-rightBits));
+  value += (unsigned int)flagset_get_raw(fs, bitEnd-rightBits, rightBits);
+  return value;
 }
 
 unsigned char flagset_get_raw(Flagset fs, unsigned long leftOffset, int bits) {
+  if(bits == 0) { return 0; }
   unsigned long byteOff;
   unsigned char bitOff;
   if(leftOffset > 8) {

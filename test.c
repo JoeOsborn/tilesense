@@ -9,6 +9,7 @@
 /*
 next
   some refactoring?  Lots of places seem to do the swept_bounds stuff, and it would be nice to minimize the propagation of that stuff.
+  large objects!  maybe if objects can have a volume -- this requires calculating the intersections of volumes, which sucks a lot.  what if objects had a list of positions, or a list of Parts that were each "one square with some properties"?  the Parts approach seems the lowest-impedance.  It does suggest that we'll want some broad-pass object-presence detection so we don't have to iterate over every object (or every part) for every sensor.
   lights
   inter-room vision (option:map_get_visible tiles or objects returns a continuation or NULL.  the continuation says which volume is seeing, which rooms were seen into and through which portals, etc - this is also included with the corresponding stimulus.  The client can then get the continuation, if any, from the stimulus, and process it, potentially reporting the results back to the sensation engine (but probably Room should offer provisions for providing data for a continuation back to the client as if it were another stimulus for the same object [including returning another continuation if necessary].  cases like:
   
@@ -32,6 +33,8 @@ next
   the latter case is probably supportable if only one portal is visible, or if the overlap of the two portals can be portrayed somehow.  Perhaps the portals could be evaluated in separate continuations.
   
   WARNING: something similarly fancy will have to be done for lights.  Perhaps light propogation could be done by a continuation after movement or actions.  for instance, light A turning on in room 0 might need to cause a light recalculation in room 1, triggering a stimulus for its sensors.
+  
+  rather than continuations, it may be better to create dummy sensors in the other rooms and figure out the LOS data for the exit tiles; from those two pieces of info, it should be possible to correctly sense the right tiles.  then, the client's job is to aggregate the stimuli from multiple rooms and send out updates to multiple rooms.
   ))
   
 lit terrain--either:
@@ -256,7 +259,43 @@ void drawmap(Map m, Object o) {
   }
 }
 
+#include "flagset.h"
+
+void assert(int fact) {
+  if(!fact) { 
+    exit(-1); 
+  }
+}
+
 int main(int argc, char **argv) {
+  
+  Flagset fs = flagset_init_raw(flagset_new_raw(24), 24);
+  //bits 0-3: 1011 = 8+2+1 = 11
+  //bits 4-11: 11001100 = 128+64+8+4 = 204
+  //bits 12-13: 11 = 2+1 = 3
+  //bits 14-19: 110011 = 32+16+2+1 = 51
+  //bits 20-23: 1011 = 8+2+1 = 11
+  //1011 1100  1100 1111  0011 1011
+  flagset_set_raw(fs, 0, 4, 11);
+  flagset_set_raw(fs, 4, 8, 204);
+  flagset_set_raw(fs, 12, 2, 3);
+  flagset_set_raw(fs, 14, 6, 51);
+  flagset_set_raw(fs, 20, 4, 11);
+  assert(flagset_get_raw_large(fs, 0, 16) == 48335);
+  assert(flagset_get_raw_large(fs, 4, 16) == 52467);
+  assert(flagset_get_raw_large(fs, 4, 20) == 839483);
+  assert(flagset_get_raw(fs, 0, 4) == 11);
+  assert(flagset_get_raw(fs, 4, 8) == 204);
+  assert(flagset_get_raw(fs, 12, 2) == 3);
+  assert(flagset_get_raw(fs, 14, 6) == 51);
+  assert(flagset_get_raw(fs, 20, 4) == 11);
+  flagset_set_raw(fs, 0, 4, 4);
+  assert(flagset_get_raw(fs, 0, 4) == 4);
+  flagset_set_raw(fs, 4, 8, 113);
+  assert(flagset_get_raw(fs, 4, 8) == 113);
+  flagset_set_raw_large(fs, 0, 12, 53900);
+  assert(flagset_get_raw_large(fs, 0, 12) == 53900);  
+  
   int finished = 0;
 
   char *font="libtcod/fonts/courier12x12_aa_tc.png";
