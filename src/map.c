@@ -34,7 +34,7 @@ Map map_init(
   unsigned short *tilemap,
   char ambientLight
 ) {
-  m->id = malloc(strlen(room)*sizeof(char));
+  m->id = malloc(1+strlen(room)*sizeof(char));
   strcpy(m->id, room);
   m->sz = sz;
   m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(short));

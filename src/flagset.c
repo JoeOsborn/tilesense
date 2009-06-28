@@ -3,21 +3,142 @@
 #include <string.h>
 #include <math.h>
 
-//Flagset flagset_new(FlagSchema fsc);
-Flagset flagset_new_raw(int bits) {
-  return calloc(ceilf(bits/8.0), sizeof(unsigned char));
+FlagSchema flagschema_new() {
+  return malloc(sizeof(struct _flag_schema));
 }
-//Flagset flagset_init(Flagset fs, FlagSchema fsc);
+FlagSchema flagschema_init(FlagSchema fs, char *label, unsigned int bitsize) {
+  fs->label = malloc(strlen(label) * sizeof(char) + 1);
+  strcpy(fs->label, label);
+  fs->bitsize = bitsize;
+  fs->offset = 0;
+  fs->next = NULL;
+  return fs;
+}
+void flagschema_free(FlagSchema fs) {
+  if(fs->next) {
+    flagschema_free(fs->next);
+  }
+  free(fs->label);
+  free(fs);
+}
+
+FlagSchema flagschema_get_last(FlagSchema first) {
+  if(first->next) {
+    return flagschema_get_last(first->next);
+  }
+  return first;
+}
+void flagschema_recalculate_offsets(FlagSchema first) {
+  FlagSchema next = first->next;
+  if(next) {
+    next->offset = first->offset + first->bitsize;
+    flagschema_recalculate_offsets(next);
+  }
+}
+void flagschema_append(FlagSchema first, FlagSchema last) {
+  flagschema_insert(flagschema_get_last(first), last);
+}
+void flagschema_insert(FlagSchema first, FlagSchema next) {
+  FlagSchema temp = first->next;
+  first->next = next;
+  if(temp) {
+    next->next = temp;
+  }
+  flagschema_recalculate_offsets(first);
+}
+
+void flagschema_label_get_offset_size(FlagSchema fs, char *key, unsigned int *offset, unsigned int *bits) {
+  if(strcmp(key, fs->label) != 0) {
+    if(fs->next) {
+      flagschema_label_get_offset_size(fs->next, key, offset, bits);
+    } else {
+      if(offset) {
+        *offset = -1;
+      }
+      if(bits) {
+        *bits = -1;
+      }
+    }
+    return;
+  }
+  if(offset) {
+    *offset = fs->offset;
+  }
+  if(bits) {
+    *bits = fs->bitsize;
+  }
+}
+void flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits) {
+  if(index > 0) {
+    if(fs->next) {
+      flagschema_index_get_offset_size(fs->next, index-1, offset, bits);
+    } else {
+      if(offset) {
+        *offset = -1;
+      }
+      if(bits) {
+        *bits = -1;
+      }
+    }
+    return;
+  }
+  if(offset) {
+    *offset = fs->offset;
+  }
+  if(bits) {
+    *bits = fs->bitsize;
+  }
+}
+
+unsigned int flagschema_net_size(FlagSchema fs) {
+  FlagSchema last = flagschema_get_last(fs);
+  return last->offset + last->bitsize;
+}
+
+Flagset flagset_new(FlagSchema fsc) {
+  return flagset_new_raw(flagschema_net_size(fsc));
+}
+Flagset flagset_new_raw(int bits) {
+  unsigned int bytes = bits / 8;
+  if(bits % 8 != 0) {
+    bytes++;
+  }
+  return calloc(bytes,sizeof(unsigned char));
+}
+Flagset flagset_init(Flagset fs, FlagSchema fsc) {
+  return flagset_init_raw(fs, flagschema_net_size(fsc));
+}
 Flagset flagset_init_raw(Flagset fs, int bits) {
-  memset(fs, 0, ceilf(bits/8.0));
+  unsigned int bytes = bits / 8;
+  if(bits % 8 != 0) {
+    bytes++;
+  }
+  memset(fs, 0, bytes*sizeof(unsigned char));
   return fs;
 }
 void flagset_free(Flagset fs) {
   free(fs);
 }
-//int flagset_get_path(Flagset fs, FlagSchema fsc, char *key, void *out);
-//int flagset_get_index(Flagset fs, FlagSchema fsc, int index, void *out);
+unsigned int flagset_get_label(Flagset fs, FlagSchema fsc, char *key) {
+  unsigned int offset=0, size=0;
+  flagschema_label_get_offset_size(fsc, key, &offset, &size);
+  if(offset == -1 || size == -1) {
+    return -1;
+  }
+  return flagset_get_raw_large(fs, offset, size);
+}
+unsigned int flagset_get_index(Flagset fs, FlagSchema fsc, int index) {
+  unsigned int offset=0, size=0;
+  flagschema_index_get_offset_size(fsc, index, &offset, &size);
+  if(offset == -1 || size == -1) {
+    return -1;
+  }
+  return flagset_get_raw_large(fs, offset, size);
+}
 unsigned int flagset_get_raw_large(Flagset fs, unsigned long leftOffset, int bits) {
+  if(bits <= 8) {
+    return flagset_get_raw(fs, leftOffset, bits);
+  }
   unsigned int value = 0;
   unsigned long byteOff = leftOffset / 8;
   unsigned char bitOff = leftOffset - (byteOff * 8);
@@ -67,16 +188,10 @@ unsigned char flagset_get_raw(Flagset fs, unsigned long leftOffset, int bits) {
   }
 }
 
-//void flagset_set_path(Flagset fs, FlagSchema fsc, char *key, void *value);
-//void flagset_set_index(Flagset fs, FlagSchema fsc, int index, void *value);
 void flagset_set_raw_large(Flagset fs, unsigned long leftOffset, int bits, unsigned int value) {
   if(bits <= 8) {
     flagset_set_raw(fs, leftOffset, bits, (unsigned char)value);
   }
-  //the current byte of value
-  unsigned char curValue = 0;
-  //where in value we start reading (from the left)
-  int valOff = (sizeof(unsigned int)*4) - bits;
   int writeOff = leftOffset;
 
   int fullBytes = bits / 8;
@@ -116,4 +231,21 @@ void flagset_set_raw(Flagset fs, unsigned long leftOffset, int bits, unsigned ch
     start[1] &= ~rightMask;
     start[1] |= (value << (8-rightBits));
   }
+}
+
+void flagset_set_label(Flagset fs, FlagSchema fsc, char *key, unsigned int value) {
+  unsigned int offset=0, size=0;
+  flagschema_label_get_offset_size(fsc, key, &offset, &size);
+  if(offset == -1 || size == -1) {
+    return;
+  }
+  return flagset_set_raw_large(fs, offset, size, value);
+}
+void flagset_set_index(Flagset fs, FlagSchema fsc, int index, unsigned int value) {
+  unsigned int offset=0, size=0;
+  flagschema_index_get_offset_size(fsc, index, &offset, &size);
+  if(offset == -1 || size == -1) {
+    return;
+  }
+  return flagset_set_raw_large(fs, offset, size, value);
 }

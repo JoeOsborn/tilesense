@@ -8,7 +8,7 @@ Exit exit_new() {
 Exit exit_init_room(Exit ex, mapVec pos, const char *r, mapVec end) {
   ex->type=RoomExit;
   ex->position=pos;
-  ex->destRoom = malloc(strlen(r)*sizeof(char));
+  ex->destRoom = malloc(1+strlen(r)*sizeof(char));
   strcpy(ex->destRoom, r);
   ex->destZone = NULL;
   ex->endPos = end;
@@ -17,7 +17,7 @@ Exit exit_init_room(Exit ex, mapVec pos, const char *r, mapVec end) {
 Exit exit_init_zone(Exit ex, mapVec pos, const char *z, const char *r, mapVec end) {
   Exit iex = exit_init_room(ex, pos, r, end);
   iex->type=ZoneExit;
-  iex->destZone = malloc(strlen(z)*sizeof(char));
+  iex->destZone = malloc(1+strlen(z)*sizeof(char));
   strcpy(iex->destZone, z);
   return iex;
 }

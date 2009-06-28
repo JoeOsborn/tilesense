@@ -44,7 +44,7 @@ lit terrain--either:
 Also, if there's a way to remove some void*s from my mutually recursive dependencies, that would be great.
 */
 
-// make -f osx/makefile test
+// make -f osx/makefile test && ./test
 
 Map createmap() {
 
@@ -267,8 +267,7 @@ void assert(int fact) {
   }
 }
 
-int main(int argc, char **argv) {
-  
+void test_flagset_raw() {
   Flagset fs = flagset_init_raw(flagset_new_raw(24), 24);
   //bits 0-3: 1011 = 8+2+1 = 11
   //bits 4-11: 11001100 = 128+64+8+4 = 204
@@ -297,6 +296,32 @@ int main(int argc, char **argv) {
   flagset_set_raw_large(fs, 0, 12, 3090);
   assert(flagset_get_raw_large(fs, 0, 12) == 3090);
   flagset_free(fs);
+  fs = NULL;
+}
+
+void test_flagschema() {
+  FlagSchema fsc = flagschema_init(flagschema_new(), "collision.normal", 2);
+  flagschema_append(fsc, flagschema_init(flagschema_new(), "collision.unusual", 2));
+  flagschema_append(fsc, flagschema_init(flagschema_new(), "collision.dry", 1));
+  flagschema_append(fsc, flagschema_init(flagschema_new(), "collision.muffin", 3));
+  assert(flagschema_net_size(fsc) == 8);
+  Flagset fs = flagset_init(flagset_new(fsc), fsc);
+  //1111 1111
+  flagset_set_raw_large(fs, 0, flagschema_net_size(fsc), 0xFFFFFFFF);
+  //1110 1111
+  flagset_set_label(fs, fsc, "collision.unusual", 2);
+  assert(flagset_get_label(fs, fsc, "collision.unusual") == 2);
+  //1110 1011
+  flagset_set_index(fs, fsc, 3, 3);
+  assert(flagset_get_index(fs, fsc, 3) == 3);
+  
+  flagschema_free(fsc);
+  flagset_free(fs);
+}
+
+int main(int argc, char **argv) {  
+//  test_flagset_raw();
+  test_flagschema();
   
   int finished = 0;
 

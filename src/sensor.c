@@ -6,7 +6,7 @@ Sensor sensor_new() {
   return malloc(sizeof(struct _sensor));
 }
 Sensor sensor_init(Sensor s, char *id, Volume volume) {
-  s->id = malloc(strlen(id));
+  s->id = malloc(1+strlen(id));
   s->id = strcpy(s->id, id);
   s->volume = volume;
   volume_swept_bounds(s->volume, &(s->borig), &(s->bsz));

@@ -1,31 +1,61 @@
 #ifndef _FLAGSET_H
 #define _FLAGSET_H
 
-//flagset will not store values larger than one byte.
-//the values taken together may be larger, but no individual value will be larger.
-//this is to simplify the external interface.  this is to avoid byte-order issues.
-//for larger values, clients must deal with byte order issues themselves externally.
+struct _flag_schema {
+  struct _flag_schema *next;
+  char *label;
+  unsigned int offset;
+  unsigned int bitsize;
+}; 
+//describes how a number of size 1-32 bits is laid out within a bitfield of arbitrary size.
+//the whole linked list describes an entire such bitfield and set of such numbers.
+//a Collision schema might describe a set of collision flags and parameters;
+//a Light schema might describe a light's behavior.
+//The goals of doing it with schema + bitfield rather than with a bitfield alone or with
+//struct syntax are:
+//first, it makes transmission over the network easier and less system-dependent.
+//it also makes it trivial to push these fields into and out of Erlang and other environments.
+//second, it allows developers and content creators to be a little explicit in their mask definitions,
+//while still providing flexibility for certain entities to have more or fewer bits in their schemae.
+//for example, if there is only one tile that is passable when the entity is slippery, it is unnecessary
+//to have slippery flags on every tile definition.  (in practice, it may be fastest to just include the rare
+//flag everywhere and check without using a schema search, or share the schema among all tiles.  collision
+//occurs outside of libtilesense, so it's up to the application to decide.)
+//third, it removes a lot of duplicate code for masking, accessing, etc, and provides 
+//minimal processing overhead and one pointer of memory overhead in the case that does not use schemae.
 
-typedef void * Flagset;
+typedef struct _flag_schema * FlagSchema;
 
-// struct _flag_schema {
-//   
-// };
-// 
-// typedef struct _flag_schema * FlagSchema;
+FlagSchema flagschema_new();
+FlagSchema flagschema_init(FlagSchema fs, char *label, unsigned int bitsize);
+//need a nice initializer to create a flagschema linked list from a string specification
 
-//Flagset flagset_new(FlagSchema fsc);
+void flagschema_free(FlagSchema fs);
+
+unsigned int flagschema_net_size(FlagSchema fs);
+//later, make sure this stuff is stored alphabetically?  or not...
+void flagschema_append(FlagSchema first, FlagSchema last);
+void flagschema_insert(FlagSchema first, FlagSchema next);
+FlagSchema flagschema_get_last(FlagSchema first);
+
+void flagschema_label_get_offset_size(FlagSchema fs, char *key, unsigned int *offset, unsigned int *bits);
+void flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits);
+
+
+typedef unsigned char * Flagset;
+
+Flagset flagset_new(FlagSchema fsc);
 Flagset flagset_new_raw(int bits);
-//Flagset flagset_init(Flagset fs, FlagSchema fsc);
+Flagset flagset_init(Flagset fs, FlagSchema fsc);
 Flagset flagset_init_raw(Flagset fs, int bits);
 void flagset_free(Flagset fs);
-//unsigned char flagset_get_path(Flagset fs, FlagSchema fsc, char *key);
-//unsigned char flagset_get_index(Flagset fs, FlagSchema fsc, int index);
 //big-endian multi-byte values
+unsigned int flagset_get_label(Flagset fs, FlagSchema fsc, char *key);
+unsigned int flagset_get_index(Flagset fs, FlagSchema fsc, int index);
 unsigned int flagset_get_raw_large(Flagset fs, unsigned long leftOffset, int bits);
 unsigned char flagset_get_raw(Flagset fs, unsigned long leftOffset, int bits);
-//void flagset_set_path(Flagset fs, FlagSchema fsc, char *key, unsigned char value);
-//void flagset_set_index(Flagset fs, FlagSchema fsc, int index, unsigned char value);
+void flagset_set_label(Flagset fs, FlagSchema fsc, char *key, unsigned int value);
+void flagset_set_index(Flagset fs, FlagSchema fsc, int index, unsigned int value);
 void flagset_set_raw_large(Flagset fs, unsigned long leftOffset, int bits, unsigned int value);
 void flagset_set_raw(Flagset fs, unsigned long leftOffset, int bits, unsigned char value);
 
