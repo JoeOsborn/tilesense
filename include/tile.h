@@ -3,6 +3,10 @@
 
 #include "geom.h"
 
+//replace all these with two Flagsets: base (for stuff like opacity, sound transmission, 
+//and other elements used by tilesense) and custom.
+//Tiles must be initialized with both schema (for thread safety; theoretically, base
+//could be a global if it's created atomically.)
 struct _tile {
   unsigned materialQuality  :  2;
   unsigned materialCategory :  4;
@@ -12,9 +16,8 @@ struct _tile {
   unsigned featureFacing    :  3; //number of octants from 0
   unsigned featureData      : 21;
     
-  unsigned solid            :  1;
   unsigned opacity          :  2;
-  unsigned flags            :  5;
+  unsigned flags            :  6;
 };
 typedef struct _tile * Tile;
 
