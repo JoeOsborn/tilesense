@@ -3,95 +3,155 @@
 #include <string.h>
 #include <math.h>
 
+struct _flag_schema_entry {
+  char *label;
+  unsigned int offset;
+  unsigned int bitsize;
+  FlagSchema children;
+}; 
+
 FlagSchema flagschema_new() {
-  return malloc(sizeof(struct _flag_schema));
+  return TCOD_list_new();
 }
-FlagSchema flagschema_init(FlagSchema fs, char *label, unsigned int bitsize) {
-  fs->label = malloc(strlen(label) * sizeof(char) + 1);
-  strcpy(fs->label, label);
-  fs->bitsize = bitsize;
-  fs->offset = 0;
-  fs->next = NULL;
+FlagSchema flagschema_init(FlagSchema fs) {
   return fs;
 }
 void flagschema_free(FlagSchema fs) {
-  if(fs->next) {
-    flagschema_free(fs->next);
+  for(int i = 0; i < TCOD_list_size(fs); i++) {
+    struct _flag_schema_entry *entry = TCOD_list_get(fs, i);
+    flagschema_free(entry->children);
+    free(entry->label);
+    free(entry);
   }
-  free(fs->label);
-  free(fs);
+  TCOD_list_delete(fs);
 }
-
-FlagSchema flagschema_get_last(FlagSchema first) {
-  if(first->next) {
-    return flagschema_get_last(first->next);
-  }
-  return first;
-}
-void flagschema_recalculate_offsets(FlagSchema first) {
-  FlagSchema next = first->next;
-  if(next) {
-    next->offset = first->offset + first->bitsize;
-    flagschema_recalculate_offsets(next);
-  }
-}
-void flagschema_append(FlagSchema first, FlagSchema last) {
-  flagschema_insert(flagschema_get_last(first), last);
-}
-void flagschema_insert(FlagSchema first, FlagSchema next) {
-  FlagSchema temp = first->next;
-  first->next = next;
-  if(temp) {
-    next->next = temp;
-  }
-  flagschema_recalculate_offsets(first);
-}
-
-void flagschema_label_get_offset_size(FlagSchema fs, char *key, unsigned int *offset, unsigned int *bits) {
-  if(strcmp(key, fs->label) != 0) {
-    if(fs->next) {
-      flagschema_label_get_offset_size(fs->next, key, offset, bits);
-    } else {
-      if(offset) {
-        *offset = -1;
-      }
-      if(bits) {
-        *bits = -1;
+struct _flag_schema_entry *flagschema_path_find_entry(FlagSchema fs, char *key) {
+  char *next = strchr(key, '.');
+  if(next) { next++; }
+  for(int i = 0; i < TCOD_list_size(fs); i++) {
+    struct _flag_schema_entry *entry = TCOD_list_get(fs, i);
+    char *check = entry->label;
+    if(strncmp(key, check, next-key-1) == 0) {
+      if(next) {
+        return flagschema_path_find_entry(entry->children, next);
+      } else {
+        return entry;
       }
     }
-    return;
   }
-  if(offset) {
-    *offset = fs->offset;
+  return NULL;
+}
+void flagschema_recalculate_bitsize(FlagSchema fs, int index) {
+  for(int i = index; i < TCOD_list_size(fs); i++) {
+    struct _flag_schema_entry *entry = TCOD_list_get(fs, i);
+    
+    if(TCOD_list_size(entry->children) > 0) {
+      entry->bitsize = 0;
+      for(int j = 0; j < TCOD_list_size(entry->children); j++) {
+        struct _flag_schema_entry *child = TCOD_list_get(entry->children, j);
+        flagschema_recalculate_bitsize(child->children, 0);
+        entry->bitsize += child->bitsize;
+      }
+    }
+    
   }
-  if(bits) {
-    *bits = fs->bitsize;
+}
+void flagschema_recalculate_offsets_inner(FlagSchema fs, int index, int startOffset) {  
+  for(int i = index; i < TCOD_list_size(fs); i++) {
+    struct _flag_schema_entry *entry = TCOD_list_get(fs, i);
+    if(i == index) {
+      entry->offset = startOffset;
+    }
+    int childSoFar = 0;
+    for(int j = 0; j < TCOD_list_size(entry->children); j++) {
+      struct _flag_schema_entry *child = TCOD_list_get(entry->children, j);
+      child->offset = entry->offset + childSoFar;
+      flagschema_recalculate_offsets_inner(child->children, index, child->offset);
+      childSoFar += child->bitsize;
+    }
+    if(i < (TCOD_list_size(fs)-1)) {
+      struct _flag_schema_entry *next = TCOD_list_get(fs, i+1);
+      next->offset = entry->offset + entry->bitsize;
+    }
+  }
+}
+void flagschema_recalculate_offsets(FlagSchema fs, int index) {
+  //recalculate sizes, then offsets.
+  flagschema_recalculate_bitsize(fs, index);
+  int start = 0;
+  if(index > 0) {
+    struct _flag_schema_entry * entry = TCOD_list_get(fs, index);
+    start = entry->offset;
+  }
+  flagschema_recalculate_offsets_inner(fs, index, start);
+}
+void flagschema_insert(FlagSchema fs, char *path, unsigned int bitsize) {
+  //later, insert in the alphabetical middle, then update find_entry to do a binary search.
+  char *next = strchr(path, '.');
+  if(next) { next++; }
+  if(!next) {
+    struct _flag_schema_entry *entry = calloc(1, sizeof(struct _flag_schema_entry));
+    entry->label = malloc(strlen(path) * sizeof(char) + 1);
+    strcpy(entry->label, path);
+    entry->bitsize = bitsize;
+    entry->offset = flagschema_net_size(fs);
+    entry->children = TCOD_list_new();
+    TCOD_list_push(fs, entry);
+  } else { 
+    //there's another level from path--next; find the right one or make it if necessary
+    char *firstPart = calloc(next-path, sizeof(char));
+    strncpy(firstPart, path, next-path-1);
+    struct _flag_schema_entry *treeTop = flagschema_path_find_entry(fs, firstPart);
+    if(!treeTop) {
+      treeTop = calloc(1, sizeof(struct _flag_schema_entry));
+      treeTop->label = calloc(strlen(firstPart) + 1, sizeof(char));
+      strcpy(treeTop->label, firstPart);
+      treeTop->bitsize = 0;
+      treeTop->offset = 0;
+      treeTop->children = TCOD_list_new();
+      //later, insert alphabetically
+      TCOD_list_push(fs, treeTop);
+    }
+    free(firstPart);
+    flagschema_insert(treeTop->children, next, bitsize);
+  }
+  int index = 0;
+  flagschema_recalculate_offsets(fs, index);
+}
+
+FlagSchema flagschema_path_get_subschema(FlagSchema fs, char *path) {
+  struct _flag_schema_entry *entry = flagschema_path_find_entry(fs, path);
+  return entry ? entry->children : NULL;
+}
+FlagSchema flagschema_index_get_subschema(FlagSchema fs, int index) {
+  struct _flag_schema_entry *entry = TCOD_list_get(fs, index);
+  return entry ? entry->children : NULL;
+}
+
+void flagschema_path_get_offset_size(FlagSchema fs, char *key, unsigned int *offset, unsigned int *bits) {
+  struct _flag_schema_entry *entry = flagschema_path_find_entry(fs, key);
+  if(entry) {
+    if(offset) {
+      *offset = entry->offset;
+    }
+    if(bits) {
+      *bits = entry->bitsize;
+    }
   }
 }
 void flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits) {
-  if(index > 0) {
-    if(fs->next) {
-      flagschema_index_get_offset_size(fs->next, index-1, offset, bits);
-    } else {
-      if(offset) {
-        *offset = -1;
-      }
-      if(bits) {
-        *bits = -1;
-      }
-    }
-    return;
-  }
+  struct _flag_schema_entry *entry = TCOD_list_get(fs, index);
   if(offset) {
-    *offset = fs->offset;
+    *offset = entry ? entry->offset : -1;
   }
   if(bits) {
-    *bits = fs->bitsize;
+    *bits = entry ? entry->bitsize : -1;
   }
 }
 
 unsigned int flagschema_net_size(FlagSchema fs) {
-  FlagSchema last = flagschema_get_last(fs);
+  if(TCOD_list_size(fs) == 0) { return 0; }
+  struct _flag_schema_entry *last = TCOD_list_get(fs, TCOD_list_size(fs)-1);
   return last->offset + last->bitsize;
 }
 
@@ -119,9 +179,9 @@ Flagset flagset_init_raw(Flagset fs, int bits) {
 void flagset_free(Flagset fs) {
   free(fs);
 }
-unsigned int flagset_get_label(Flagset fs, FlagSchema fsc, char *key) {
+unsigned int flagset_get_path(Flagset fs, FlagSchema fsc, char *key) {
   unsigned int offset=0, size=0;
-  flagschema_label_get_offset_size(fsc, key, &offset, &size);
+  flagschema_path_get_offset_size(fsc, key, &offset, &size);
   if(offset == -1 || size == -1) {
     return -1;
   }
@@ -233,9 +293,9 @@ void flagset_set_raw(Flagset fs, unsigned long leftOffset, int bits, unsigned ch
   }
 }
 
-void flagset_set_label(Flagset fs, FlagSchema fsc, char *key, unsigned int value) {
+void flagset_set_path(Flagset fs, FlagSchema fsc, char *key, unsigned int value) {
   unsigned int offset=0, size=0;
-  flagschema_label_get_offset_size(fsc, key, &offset, &size);
+  flagschema_path_get_offset_size(fsc, key, &offset, &size);
   if(offset == -1 || size == -1) {
     return;
   }

@@ -1,12 +1,10 @@
 #ifndef _FLAGSET_H
 #define _FLAGSET_H
 
-struct _flag_schema {
-  struct _flag_schema *next;
-  char *label;
-  unsigned int offset;
-  unsigned int bitsize;
-}; 
+#include <libtcod.h>
+#include <list.h>
+
+typedef TCOD_list_t FlagSchema;
 //describes how a number of size 1-32 bits is laid out within a bitfield of arbitrary size.
 //the whole linked list describes an entire such bitfield and set of such numbers.
 //a Collision schema might describe a set of collision flags and parameters;
@@ -24,21 +22,20 @@ struct _flag_schema {
 //third, it removes a lot of duplicate code for masking, accessing, etc, and provides 
 //minimal processing overhead and one pointer of memory overhead in the case that does not use schemae.
 
-typedef struct _flag_schema * FlagSchema;
-
 FlagSchema flagschema_new();
-FlagSchema flagschema_init(FlagSchema fs, char *label, unsigned int bitsize);
 //need a nice initializer to create a flagschema linked list from a string specification
+FlagSchema flagschema_init(FlagSchema fs);
 
 void flagschema_free(FlagSchema fs);
 
 unsigned int flagschema_net_size(FlagSchema fs);
 //later, make sure this stuff is stored alphabetically?  or not...
-void flagschema_append(FlagSchema first, FlagSchema last);
-void flagschema_insert(FlagSchema first, FlagSchema next);
-FlagSchema flagschema_get_last(FlagSchema first);
+void flagschema_insert(FlagSchema schema, char *path, unsigned int bitsize);
 
-void flagschema_label_get_offset_size(FlagSchema fs, char *key, unsigned int *offset, unsigned int *bits);
+FlagSchema flagschema_path_get_subschema(FlagSchema fs, char *path);
+FlagSchema flagschema_index_get_subschema(FlagSchema fs, int index);
+
+void flagschema_path_get_offset_size(FlagSchema fs, char *path, unsigned int *offset, unsigned int *bits);
 void flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits);
 
 
@@ -50,11 +47,11 @@ Flagset flagset_init(Flagset fs, FlagSchema fsc);
 Flagset flagset_init_raw(Flagset fs, int bits);
 void flagset_free(Flagset fs);
 //big-endian multi-byte values
-unsigned int flagset_get_label(Flagset fs, FlagSchema fsc, char *key);
+unsigned int flagset_get_path(Flagset fs, FlagSchema fsc, char *key);
 unsigned int flagset_get_index(Flagset fs, FlagSchema fsc, int index);
 unsigned int flagset_get_raw_large(Flagset fs, unsigned long leftOffset, int bits);
 unsigned char flagset_get_raw(Flagset fs, unsigned long leftOffset, int bits);
-void flagset_set_label(Flagset fs, FlagSchema fsc, char *key, unsigned int value);
+void flagset_set_path(Flagset fs, FlagSchema fsc, char *key, unsigned int value);
 void flagset_set_index(Flagset fs, FlagSchema fsc, int index, unsigned int value);
 void flagset_set_raw_large(Flagset fs, unsigned long leftOffset, int bits, unsigned int value);
 void flagset_set_raw(Flagset fs, unsigned long leftOffset, int bits, unsigned char value);

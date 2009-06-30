@@ -46,8 +46,7 @@ Also, if there's a way to remove some void*s from my mutually recursive dependen
 
 // make -f osx/makefile test && ./test
 
-Map createmap() {
-
+Map createmap(FlagSchema tileSchema) {
   Map m = map_new();
   unsigned short tileMap[] = {
     2, 2, 2, 2, 2, 2, 2, 2,
@@ -90,35 +89,18 @@ Map createmap() {
     "test_room", 
     (mapVec){8, 8, 4}, 
     tileMap,
-    3
+    3,
+    tileSchema
   ); 
   Tile floorTile = tile_init(
     tile_new(), 
-    0, 
-    0, 
     0,
-
-    1, //0=null,1=floor,2=step,3=wall
-    0,
-    0,
-
-    0,
-    0,
-    0
+    tileSchema
   );
   Tile wallTile = tile_init(
     tile_new(), 
-    0, 
-    0, 
-    0,
-  
-    3, //0=null,1=floor,2=step,3=wall
-    0,
-    0,
-  
     1,
-    3,
-    0
+    tileSchema
   );
   map_add_tile(m, floorTile);
   map_add_tile(m, wallTile);
@@ -300,20 +282,23 @@ void test_flagset_raw() {
 }
 
 void test_flagschema() {
-  FlagSchema fsc = flagschema_init(flagschema_new(), "collision.normal", 2);
-  flagschema_append(fsc, flagschema_init(flagschema_new(), "collision.unusual", 2));
-  flagschema_append(fsc, flagschema_init(flagschema_new(), "collision.dry", 1));
-  flagschema_append(fsc, flagschema_init(flagschema_new(), "collision.muffin", 3));
+  FlagSchema fsc = flagschema_init(flagschema_new());
+  flagschema_insert(fsc, "collision.normal", 2);
+  flagschema_insert(fsc, "collision.unusual", 2);
+  flagschema_insert(fsc, "collision.dry", 1);
+  flagschema_insert(fsc, "collision.muffin", 3);
+  assert(TCOD_list_size(fsc) == 1);
   assert(flagschema_net_size(fsc) == 8);
   Flagset fs = flagset_init(flagset_new(fsc), fsc);
   //1111 1111
   flagset_set_raw_large(fs, 0, flagschema_net_size(fsc), 0xFFFFFFFF);
   //1110 1111
-  flagset_set_label(fs, fsc, "collision.unusual", 2);
-  assert(flagset_get_label(fs, fsc, "collision.unusual") == 2);
+  flagset_set_path(fs, fsc, "collision.unusual", 2);
+  assert(flagset_get_path(fs, fsc, "collision.unusual") == 2);
   //1110 1011
-  flagset_set_index(fs, fsc, 3, 3);
-  assert(flagset_get_index(fs, fsc, 3) == 3);
+  FlagSchema collisionSub = flagschema_index_get_subschema(fsc, 0);
+  flagset_set_index(fs, collisionSub, 3, 3);
+  assert(flagset_get_index(fs, collisionSub, 3) == 3);
   
   flagschema_free(fsc);
   flagset_free(fs);
@@ -330,8 +315,10 @@ int main(int argc, char **argv) {
   int font_flags=TCOD_FONT_TYPE_GREYSCALE|TCOD_FONT_LAYOUT_TCOD;
 	TCOD_console_set_custom_font(font,font_flags,nb_char_horiz,nb_char_vertic);
 	TCOD_console_init_root(80,24,"tilesense demo",false);
+  FlagSchema tileSchema = flagschema_init(flagschema_new());
+  flagschema_insert(tileSchema, "collision.normal", 1);
 
-  Map m = createmap();
+  Map m = createmap(tileSchema);
   Object playerObj = object_init(object_new(), 
     "@", 
     (mapVec){3, 1, 0}, 
@@ -440,5 +427,6 @@ int main(int argc, char **argv) {
   		}
     }
 	} while (!finished && !TCOD_console_is_window_closed());
+  flagschema_free(tileSchema);
   return 0;
 }

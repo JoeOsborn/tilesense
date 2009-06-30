@@ -8,6 +8,7 @@
 #include "exit.h"
 #include "tile.h"
 #include "volume.h"
+#include "flagset.h"
 
 struct _map {
   char *id;
@@ -30,7 +31,8 @@ Map map_init(
   char *room, 
   mapVec sz, 
   unsigned short *tilemap,
-  char ambientLight
+  char ambientLight,
+  FlagSchema defaultSchema
 );
 void map_free(Map m);
 mapVec map_size(Map m);

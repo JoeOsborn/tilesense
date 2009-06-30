@@ -6,34 +6,19 @@ Tile tile_new() {
 }
 Tile tile_init(
   Tile t, 
-  unsigned char mq, 
-  unsigned char mc, 
-  unsigned short mt,
-  
-  unsigned char ft,
-  unsigned char faceOctants,
-  unsigned int fd,
-  
-  unsigned char solid,
   unsigned char opacity,
-  unsigned flags
+  FlagSchema fsc
 ) {
-  t->materialQuality = mq;
-  t->materialCategory = mc;
-  t->materialType = mt;
-  
-  t->featureType = ft;
-  t->featureFacing = faceOctants;
-  t->featureData = fd;
-  
-  t->solid = solid;
   t->opacity = opacity;
-  t->flags = flags;
-  
+  t->flags = flagset_init(flagset_new(fsc), fsc);
   return t;
 }
 void tile_free(Tile t) {
+  flagset_free(t->flags);
   free(t);
+}
+Flagset tile_flags(Tile t) {
+  return t->flags;
 }
 int tile_opacity(Tile t) {
   return t->opacity;
