@@ -32,8 +32,7 @@ Map map_init(
   char *room, 
   mapVec sz, 
   unsigned short *tilemap,
-  char ambientLight,
-  FlagSchema defaultSchema
+  char ambientLight
 ) {
   m->id = malloc(1+strlen(room)*sizeof(char));
   strcpy(m->id, room);
@@ -45,7 +44,7 @@ Map map_init(
     m->tilemap[i] = (tilemap[i] << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
   }
   m->tileset = TCOD_list_new();
-  map_add_tile(m, tile_init(tile_new(), 0, flagset_init(flagset_new(defaultSchema), defaultSchema)));
+  map_add_tile(m, tile_init(tile_new(), 0));
   m->ambientLight = ambientLight;
   m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();

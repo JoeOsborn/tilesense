@@ -26,6 +26,8 @@ typedef enum {
   VolumeTypeAABox
 } VolumeType;
 
+//add on an extra "flags" Flagset for user purposes?
+
 struct _volume {
   VolumeType type;
   mapVec position;

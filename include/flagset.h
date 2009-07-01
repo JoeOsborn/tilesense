@@ -4,9 +4,8 @@
 #include <libtcod.h>
 #include <list.h>
 
-typedef TCOD_list_t FlagSchema;
 //describes how a number of size 1-32 bits is laid out within a bitfield of arbitrary size.
-//the whole linked list describes an entire such bitfield and set of such numbers.
+//the whole tree describes an entire such bitfield and set of such numbers.
 //a Collision schema might describe a set of collision flags and parameters;
 //a Light schema might describe a light's behavior.
 //The goals of doing it with schema + bitfield rather than with a bitfield alone or with
@@ -21,6 +20,8 @@ typedef TCOD_list_t FlagSchema;
 //occurs outside of libtilesense, so it's up to the application to decide.)
 //third, it removes a lot of duplicate code for masking, accessing, etc, and provides 
 //minimal processing overhead and one pointer of memory overhead in the case that does not use schemae.
+
+typedef TCOD_list_t FlagSchema;
 
 FlagSchema flagschema_new();
 //need a nice initializer to create a flagschema linked list from a string specification

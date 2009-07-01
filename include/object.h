@@ -5,6 +5,8 @@
 #include <list.h>
 #include "geom.h"
 
+//add on an extra "flags" Flagset for user purposes?
+
 struct _object {
   char *id;
   mapVec position;

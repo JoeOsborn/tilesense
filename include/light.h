@@ -8,11 +8,13 @@ struct _light {
   char *id;
   Volume volume, oldVolume;
   
+  //replace these with Tile-style implicit base Flagset?
+  //add on an extra "flags" Flagset for user purposes?
   unsigned char attenuation;
   char intensity;
   
-  void * owner; //ugly hack, recursive blah
-  void * map; //ugly hack, recursive blah
+  void * owner; //ugly type hack, recursive blah
+  void * map; //ugly type hack, recursive blah
 };
 
 typedef struct _light * Light;

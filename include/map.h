@@ -8,7 +8,6 @@
 #include "exit.h"
 #include "tile.h"
 #include "volume.h"
-#include "flagset.h"
 
 struct _map {
   char *id;
@@ -18,9 +17,7 @@ struct _map {
   char ambientLight;
   TCOD_list_t exits;
   TCOD_list_t objects;
-  // Exit *exits;
-  // int exitCount, exitMax;
-  };
+};
 typedef struct _map * Map;
 
 #include "object.h" //ugly hack to avoid recursive type bleh
@@ -31,8 +28,7 @@ Map map_init(
   char *room, 
   mapVec sz, 
   unsigned short *tilemap,
-  char ambientLight,
-  FlagSchema defaultSchema
+  char ambientLight
 );
 void map_free(Map m);
 mapVec map_size(Map m);

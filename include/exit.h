@@ -3,6 +3,11 @@
 
 #include "geom.h"
 
+//add on an extra "flags" Flagset for user purposes?
+//should exit even be a part of libtilesense?  Probably, for inter-room stuff...
+//consider how to move forward on this.
+//defer it for now.
+
 typedef enum {
   RoomExit,
   ZoneExit

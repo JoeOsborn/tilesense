@@ -6,6 +6,8 @@
 #include <list.h>
 #include "volume.h"
 
+//add on an extra "flags" Flagset for user purposes?
+
 struct _sensor {
   char *id;
   Volume volume;  

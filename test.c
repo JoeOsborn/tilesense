@@ -46,7 +46,7 @@ Also, if there's a way to remove some void*s from my mutually recursive dependen
 
 // make -f osx/makefile test && ./test
 
-Map createmap(FlagSchema tileSchema) {
+Map createmap() {
   Map m = map_new();
   unsigned short tileMap[] = {
     2, 2, 2, 2, 2, 2, 2, 2,
@@ -89,18 +89,15 @@ Map createmap(FlagSchema tileSchema) {
     "test_room", 
     (mapVec){8, 8, 4}, 
     tileMap,
-    3,
-    tileSchema
+    3
   ); 
   Tile floorTile = tile_init(
     tile_new(), 
-    0,
-    tileSchema
+    0
   );
   Tile wallTile = tile_init(
     tile_new(), 
-    1,
-    tileSchema
+    1
   );
   map_add_tile(m, floorTile);
   map_add_tile(m, wallTile);
@@ -315,10 +312,8 @@ int main(int argc, char **argv) {
   int font_flags=TCOD_FONT_TYPE_GREYSCALE|TCOD_FONT_LAYOUT_TCOD;
 	TCOD_console_set_custom_font(font,font_flags,nb_char_horiz,nb_char_vertic);
 	TCOD_console_init_root(80,24,"tilesense demo",false);
-  FlagSchema tileSchema = flagschema_init(flagschema_new());
-  flagschema_insert(tileSchema, "collision.normal", 1);
 
-  Map m = createmap(tileSchema);
+  Map m = createmap();
   Object playerObj = object_init(object_new(), 
     "@", 
     (mapVec){3, 1, 0}, 
@@ -427,6 +422,5 @@ int main(int argc, char **argv) {
   		}
     }
 	} while (!finished && !TCOD_console_is_window_closed());
-  flagschema_free(tileSchema);
   return 0;
 }
