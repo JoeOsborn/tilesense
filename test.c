@@ -321,26 +321,19 @@ int main(int argc, char **argv) {
     m
   );
   map_add_object(m, playerObj);
-  Light playerLamp = light_init(light_new(),
-    "lamp",
-    sphere_init(
-      sphere_new(),
-      mapvec_zero,
-      2
-    ),
-    0, //0 attenuation - stop immediately at max range
-    2  //brightness 2
-  );
-  object_add_light(playerObj, playerLamp);
-  
-  Sensor player = sensor_init(sensor_new(), 
-    "player", 
-    sphere_init(sphere_new(),
-      mapvec_zero, 
-      4
-    )
-  );
-  object_add_sensor(playerObj, player);
+  #warning still need to do lights!
+  // Light playerLamp = light_init(light_new(),
+  //   "lamp",
+  //   sphere_init(
+  //     sphere_new(),
+  //     mapvec_zero,
+  //     2
+  //   ),
+  //   0, //0 attenuation - stop immediately at max range
+  //   2  //brightness 2
+  // );
+  // object_add_light(playerObj, playerLamp);
+
   // Sensor leftEye = sensor_init(sensor_new(), "left_eye",
   //   frustum_init(frustum_new(),
   //     mapvec_zero,
@@ -366,10 +359,22 @@ int main(int argc, char **argv) {
   // object_add_sensor(playerObj, leftEye);
   // object_add_sensor(playerObj, rightEye);
   // object_add_sensor(playerObj, basicSense);
+  
+  Sensor player = sensor_init(sensor_new(), 
+    "player", 
+    sphere_init(sphere_new(),
+      mapvec_zero, 
+      4
+    )
+  );
+  object_add_sensor(playerObj, player);
     
   object_sense(playerObj);
+  
+  
   TCOD_sys_set_fps(30);
 	TCOD_console_set_foreground_color(NULL,TCOD_white);
+	
   drawmap(m, playerObj);
   TCOD_console_flush();
 

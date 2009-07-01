@@ -222,6 +222,10 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
         newFlags  = flags[destIndex];
         newFlags  = MAP_SET_LIT(newFlags, litFlags);
         
+        volFlags  = MAP_VOL(flags[destIndex]);
+        
+        //uh oh, volflags are never 0x00! VOLFLAGS ARE NEVER GETTING INITIALIZED WTF COME ON GUYS SERIOUSLY!!! HOW DID THIS EVER WORK EVEN A LITLTE BIT!?!?!?
+        
         //vol is 0 0 if unsure, 1 1 if known vol, 1 0 if edge of vol, 0 1 if known out-of-vol.
         if(volFlags == 0x00) {
           cur = (mapVec){x, y, z};
