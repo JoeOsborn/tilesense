@@ -161,39 +161,75 @@ Tile map_get_tiledef(Map m, int i) {
   return TCOD_list_get(m->tileset, i);
 }
 
+//returns the visibility of the previous tile (x,y,z) based on the visibility of the next tile in the path.
 unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz) {
-  //try to trace back to position through tiles that allow light to pass (flag bit 2)  
+  //try to trace to position through tiles that allow light to pass
   int x, y, z;
+  //if the next tile is the position...
   if(TCOD_line3_step_mt(&x, &y, &z, bd)) {
-    //if you hit the position, you and everything you touched are visible. stop.
+    //the previous tile is in los.
     return 0x03;
   }
-  unsigned int index = map_tile_index(m, x, y, z);
-  unsigned int destIndex = tile_index(x, y, z, map_size(m), bpos, bsz);
-  unsigned short mapItem = m->tilemap[index];
-  unsigned char flg = flags[destIndex];
-  unsigned char tileIndex   = MAP_IND(mapItem);
-  unsigned char vis         = MAP_LOS(flg);
-  Tile tileDef              = map_get_tiledef(m, tileIndex);
-  unsigned char blockage    = tile_opacity(tileDef);
-  if(blockage == 0x03 || vis == 0x01) {
-    //if you hit a wall, you and everything you touched are non-visible. stop.
-    //if you trace through a known non-visible tile, you and everything you touched are also non-visible. stop.
-    return 0x01; //bail and propagate
-  } else if(blockage > 0x00) {
-    //partially visible through light blockage -- later, refine to account for repeated blockage by treating this as a subtraction, rather than a set.
-    return 0x02;
-  }
-  if(vis > 0x01) {
-    //if you trace through a known visible tile, you and everything you touched are also visible to the same extent. stop.
-    return vis; //it's visible, go ahead!
-  }
-  //otherwise, we're tracing through a tile with unknown visibility.  keep going!
-  unsigned char recviz = map_trace_light(m, flags, bd, bpos, bsz);
-  flags[destIndex] = MAP_SET_LOS(flags[destIndex], recviz); //update that tile with its visibility
-  //we must be the same visibility.
+  unsigned int index      = map_tile_index(m, x, y, z);
+  unsigned short mapItem  = m->tilemap[index];
+  unsigned char tileIndex = MAP_IND(mapItem);
+  Tile tileDef            = map_get_tiledef(m, tileIndex);
+  unsigned char blockage  = tile_opacity(tileDef);
+
+  unsigned int destIndex    = tile_index(x, y, z, map_size(m), bpos, bsz);
+  unsigned char flg         = flags[destIndex];
+  unsigned char los         = MAP_LOS(flg);
   
-  return recviz;
+  //if the next tile is not in los...
+  if(los == 0x01) {
+    //the previous tiles must all be not in los as well.
+    return 0x01; //bail and propagate
+  } 
+  //if the next tile is in los...
+  if(los > 0x01)
+  {
+    //and the next tile is a wall...
+    if(blockage == 0x03) {
+      //the previous tile is not in los.
+      return 0x01;
+    //and the next tile is partially in los...
+    } else if(blockage > 0x00 && blockage < 0x03) {
+      //the previous tile is partially in los (later, use subtraction instead of a direct set)
+      return 0x02;
+    //and the next tile does not block los...
+    } else {
+      //the previous tile is as in-los as the next tile.
+      return los;
+    }
+  }
+  //otherwise, we're tracing through a tile with unknown los.
+  //trace to the next tile, which may have a known los.
+  unsigned char reclos = map_trace_light(m, flags, bd, bpos, bsz);
+  flags[destIndex] = MAP_SET_LOS(flags[destIndex], reclos); 
+  //if the next tile is not in los...
+  if(reclos == 0x01) {
+    //the previous tiles must all be not in los as well.
+    return 0x01; //bail and propagate
+  } 
+  //if the next tile is in los...
+  if(reclos > 0x01)
+  {
+    //and the next tile is a wall...
+    if(blockage == 0x03) {
+      //the previous tile is not in los.
+      return 0x01;
+    //and the next tile is partially in los...
+    } else if(blockage > 0x00 && blockage < 0x03) {
+      //the previous tile is partially in los (later, use subtraction instead of a direct set)
+      return 0x02;
+    //and the next tile does not block los...
+    } else {
+      //the previous tile is as in-los as the next tile.
+      return reclos;
+    }
+  }
+  //for some reason, we still don't know whether we're in los.
+  return 0x00;
 }
 //refactor to support an interface that includes a Light and updates the lit flags rather than the viz flags.
 void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos, mapVec bsz) {
@@ -221,14 +257,10 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
         litFlags  = MAP_LIT(mapItem);    
         newFlags  = flags[destIndex];
         newFlags  = MAP_SET_LIT(newFlags, litFlags);
-        
-        volFlags  = MAP_VOL(flags[destIndex]);
-        
-        //uh oh, volflags are never 0x00! VOLFLAGS ARE NEVER GETTING INITIALIZED WTF COME ON GUYS SERIOUSLY!!! HOW DID THIS EVER WORK EVEN A LITLTE BIT!?!?!?
-        
+                
+        cur = (mapVec){x, y, z};
         //vol is 0 0 if unsure, 1 1 if known vol, 1 0 if edge of vol, 0 1 if known out-of-vol.
-        if(volFlags == 0x00) {
-          cur = (mapVec){x, y, z};
+        if(MAP_VOL(newFlags) == 0x00) {
           //if it's within the volume
           if(volume_contains_point(vol, cur, 0.0)) {
             newFlags = MAP_SET_VOL(newFlags, 0x03);

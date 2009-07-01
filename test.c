@@ -97,7 +97,7 @@ Map createmap() {
   );
   Tile wallTile = tile_init(
     tile_new(), 
-    1
+    3
   );
   map_add_tile(m, floorTile);
   map_add_tile(m, wallTile);
