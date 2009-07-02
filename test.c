@@ -89,23 +89,27 @@ Map createmap() {
     "test_room", 
     (mapVec){8, 8, 4}, 
     tileMap,
-    3
+    3,
+    NULL,
+    NULL
   ); 
   Tile floorTile = tile_init(
     tile_new(), 
-    0
+    0,
+    NULL
   );
   Tile wallTile = tile_init(
     tile_new(), 
-    3
+    3,
+    NULL
   );
   map_add_tile(m, floorTile);
   map_add_tile(m, wallTile);
   
-  map_add_object(m, object_init(object_new(), "a", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m));
-  map_add_object(m, object_init(object_new(), "b", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m));
-  map_add_object(m, object_init(object_new(), "c", (mapVec){2, 4, 0}, (mapVec){1, 1, 0}, m));
-  map_add_object(m, object_init(object_new(), "d", (mapVec){6, 6, 0}, (mapVec){1, 1, 0}, m));
+  map_add_object(m, object_init(object_new(), "a", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
+  map_add_object(m, object_init(object_new(), "b", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
+  map_add_object(m, object_init(object_new(), "c", (mapVec){2, 4, 0}, (mapVec){1, 1, 0}, m, NULL));
+  map_add_object(m, object_init(object_new(), "d", (mapVec){6, 6, 0}, (mapVec){1, 1, 0}, m, NULL));
 
   return m;
 }
@@ -318,7 +322,8 @@ int main(int argc, char **argv) {
     "@", 
     (mapVec){3, 1, 0}, 
     (mapVec){1, 1, 0},
-    m
+    m,
+    NULL
   );
   map_add_object(m, playerObj);
   #warning still need to do lights!
@@ -330,7 +335,8 @@ int main(int argc, char **argv) {
   //     2
   //   ),
   //   0, //0 attenuation - stop immediately at max range
-  //   2  //brightness 2
+  //   2,  //brightness 2
+  //   NULL
   // );
   // object_add_light(playerObj, playerLamp);
 
@@ -340,7 +346,8 @@ int main(int argc, char **argv) {
   //     (mapVec){1, -1, 0},
   //     1, 2,
   //     0, 10
-  //   )
+  //   ),
+  //   NULL
   // );
   // Sensor rightEye = sensor_init(sensor_new(), "right_eye",
   //   frustum_init(frustum_new(),
@@ -348,13 +355,15 @@ int main(int argc, char **argv) {
   //     (mapVec){1, 1, 0},
   //     1, 2,
   //     0, 10
-  //   )
+  //   ),
+  //   NULL
   // );
   // Sensor basicSense = sensor_init(sensor_new(), "basic_sense",
   //   sphere_init(sphere_new(),
   //     mapvec_zero,
   //     2
-  //   )
+  //   ),
+  //   NULL
   // );
   // object_add_sensor(playerObj, leftEye);
   // object_add_sensor(playerObj, rightEye);
@@ -365,7 +374,8 @@ int main(int argc, char **argv) {
     sphere_init(sphere_new(),
       mapvec_zero, 
       4
-    )
+    ),
+    NULL
   );
   object_add_sensor(playerObj, player);
     

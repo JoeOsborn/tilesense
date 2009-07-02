@@ -36,8 +36,10 @@ Stimulus stimulus_init_type(Stimulus s, stimtype type) {
   return s;
 }
 
-Stimulus stimulus_init_generic(Stimulus s) {
-  return stimulus_init_type(s, StimGeneric);
+Stimulus stimulus_init_generic(Stimulus s, void *context) {
+  s = stimulus_init_type(s, StimGeneric);
+  s->stim.generic.context = context;
+  return s;
 }
 
 Stimulus stimulus_init_tile_sight_change(Stimulus s, unsigned char *newTiles, mapVec position, mapVec size, stimtype type) {
@@ -57,28 +59,37 @@ Stimulus stimulus_init_tile_lit_change(Stimulus s, unsigned char *newTiles, mapV
   return stimulus_init_tile_sight_change(s, newTiles, position, size, StimTileLitChange);
 }
 
-Stimulus stimulus_init_obj_sight_change(Stimulus s, Object obj, unsigned char newFlags, stimtype type) {
+Stimulus stimulus_init_obj_sight_change(Stimulus s, Object obj, unsigned char newFlags, stimtype type, void *ctx) {
   s->stim.obj_sight_change.position = object_position(obj);
   s->stim.obj_sight_change.facing = object_facing(obj);
   s->stim.obj_sight_change.id = malloc(1+strlen(object_id(obj)));
   strcpy(s->stim.obj_sight_change.id, object_id(obj));
   s->stim.obj_sight_change.newFlags = newFlags;
+  s->stim.obj_sight_change.context = ctx;
   return stimulus_init_type(s, type);
 }
 
-Stimulus stimulus_init_obj_vis_change(Stimulus s, Object obj, unsigned char newFlags) {
-  return stimulus_init_obj_sight_change(s, obj, newFlags, StimObjVisChange);
+Stimulus stimulus_init_obj_vis_change(Stimulus s, Object obj, unsigned char newFlags, void *ctx) {
+  return stimulus_init_obj_sight_change(s, obj, newFlags, StimObjVisChange, ctx);
 }
 
-Stimulus stimulus_init_obj_lit_change(Stimulus s, Object obj, unsigned char newFlags) {
-  return stimulus_init_obj_sight_change(s, obj, newFlags, StimObjLitChange);
+Stimulus stimulus_init_obj_lit_change(Stimulus s, Object obj, unsigned char newFlags, void *ctx) {
+  return stimulus_init_obj_sight_change(s, obj, newFlags, StimObjLitChange, ctx);
 }
 
-Stimulus stimulus_init_obj_moved(Stimulus s, Object obj, mapVec dir, unsigned char newFlags) {
-  s = stimulus_init_obj_sight_change(s, obj, newFlags, StimObjMoved);
+Stimulus stimulus_init_obj_moved(Stimulus s, Object obj, mapVec dir, unsigned char newFlags, void *ctx) {
+  s = stimulus_init_obj_sight_change(s, obj, newFlags, StimObjMoved, ctx);
   s->stim.obj_moved.dir = dir;
   return s;
 }
+
+void *stimulus_obj_sight_change_get_context(Stimulus s) {
+  return s->stim.obj_sight_change.context;
+}
+void * stimulus_obj_moved_get_context(Stimulus s) {
+  return stimulus_obj_sight_change_get_context(s);
+}
+
 
 stimtype stimulus_type(Stimulus s) {
   return s->type;

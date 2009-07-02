@@ -8,7 +8,7 @@ Object object_new() {
   return malloc(sizeof(struct _object));
 }
 
-Object object_init(Object o, char *id, mapVec pos, mapVec face, Map m) {
+Object object_init(Object o, char *id, mapVec pos, mapVec face, Map m, void *context) {
   o->id = malloc(1+strlen(id)*sizeof(char));
   strcpy(o->id, id);
   o->position = pos;
@@ -16,6 +16,7 @@ Object object_init(Object o, char *id, mapVec pos, mapVec face, Map m) {
   o->map = m;
   o->sensors = TCOD_list_new();
   o->lights = TCOD_list_new();
+  o->context = context;
   return o;
 }
 
@@ -31,7 +32,12 @@ void object_free(Object o) {
   TCOD_list_delete(o->lights);
   free(o);
 }
-
+void *object_context(Object o) {
+  return o->context;
+}
+void object_set_context(Object o, void *ctx) {
+  o->context = ctx;
+}
 mapVec object_position(Object o) {
   return o->position;
 }
@@ -142,7 +148,7 @@ void object_note_object_moved(Object o, Object o2, mapVec delta) {
     newVis = map_item_visible(newMapItem);
     if(oldVis || newVis) {
       newFlags = map_item_flags(newMapItem);
-      movestim = stimulus_init_obj_moved(stimulus_new(), o2, delta, newFlags);
+      movestim = stimulus_init_obj_moved(stimulus_new(), o2, delta, newFlags, o2->context);
       sensor_push_stimulus(s, movestim);
     }
   }

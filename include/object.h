@@ -14,6 +14,8 @@ struct _object {
   TCOD_list_t sensors;
   TCOD_list_t lights;
   void * map; //ugly hack to avoid recursive struct def'n, should be Map
+  
+  void *context;
 };
 typedef struct _object * Object;
 
@@ -22,13 +24,16 @@ typedef struct _object * Object;
 #include "light.h"
 
 Object object_new();
-Object object_init(Object o, char *id, mapVec pos, mapVec face, Map m);
+Object object_init(Object o, char *id, mapVec pos, mapVec face, Map m, void *context);
 void object_free(Object o);
 
 mapVec object_position(Object o);
 mapVec object_facing(Object o);
 char *object_id(Object o);
 Map object_map(Object o);
+
+void *object_context(Object o);
+void object_set_context(Object o, void *ctx);
 
 void object_sense(Object o);
 

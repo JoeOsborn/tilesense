@@ -5,7 +5,7 @@
 Sensor sensor_new() {
   return malloc(sizeof(struct _sensor));
 }
-Sensor sensor_init(Sensor s, char *id, Volume volume) {
+Sensor sensor_init(Sensor s, char *id, Volume volume, void *context) {
   s->id = malloc(1+strlen(id));
   s->id = strcpy(s->id, id);
   s->volume = volume;
@@ -18,6 +18,8 @@ Sensor sensor_init(Sensor s, char *id, Volume volume) {
   s->oldVisObjects = TCOD_list_new();
 
   s->stimuli = TCOD_list_new();
+  
+  s->context = context;
   
   return s;
 }
@@ -58,6 +60,9 @@ void sensor_set_owner(Sensor s, Object o) {
 void sensor_set_map(Sensor s, Map m) {
   s->map = m;
 }
+void *sensor_context(Sensor s) {
+  return s->context;
+}
 
 void sensor_move(Sensor s, mapVec delta) {
   sensor_set_position(s, mapvec_add(sensor_position(s), delta));
@@ -94,7 +99,7 @@ void sensor_sense(Sensor s) {
   for(int i = 0; i < TCOD_list_size(s->oldVisObjects); i++) {
     o = TCOD_list_get(s->oldVisObjects, i);
     if(!TCOD_list_contains(s->visObjects, o)) { //not visible anymore
-      visobj = stimulus_init_obj_vis_change(stimulus_new(), o, 0x00);
+      visobj = stimulus_init_obj_vis_change(stimulus_new(), o, 0x00, object_context(o));
       TCOD_list_push(s->stimuli, visobj);
     }
   }
@@ -104,7 +109,7 @@ void sensor_sense(Sensor s) {
     if(!TCOD_list_contains(s->oldVisObjects, o)) { //not visible before
       pt = object_position(o);
       index = tile_index(pt.x, pt.y, pt.z, map_size(m), pos, sz);
-      visobj = stimulus_init_obj_vis_change(stimulus_new(), o, s->vistiles[index]);
+      visobj = stimulus_init_obj_vis_change(stimulus_new(), o, s->vistiles[index], object_context(o));
       TCOD_list_push(s->stimuli, visobj);
     }
   }

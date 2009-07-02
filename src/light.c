@@ -5,13 +5,14 @@
 Light light_new() {
   return malloc(sizeof(struct _light));
 }
-Light light_init(Light l, char *id, Volume volume, unsigned char attenuation, char intensity) {
+Light light_init(Light l, char *id, Volume volume, unsigned char attenuation, char intensity, void *context) {
   l->id = malloc(1+strlen(id));
   strcpy(l->id, id);
   l->attenuation = attenuation;
   l->intensity = intensity;
   l->volume = volume;
   l->oldVolume = NULL;
+  l->context = context;
   return l;
 }
 void light_free(Light l) {
@@ -72,6 +73,9 @@ void light_set_facing(Light l, mapVec facing) {
   if(l->map) {
     map_note_light_volume_changed(l->map, l->attenuation, l->intensity, l->oldVolume, l->volume);
   }
+}
+void *light_context(Light l) {
+  return l->context;
 }
 void light_move(Light l, mapVec delta) {
   light_set_position(l, mapvec_add(light_position(l), delta));

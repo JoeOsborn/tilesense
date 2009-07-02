@@ -24,6 +24,8 @@ struct _sensor {
   
   void * owner; //ugly hack for recursive bleh, should be Object
   void * map; //ugly hack for recursive bleh, should be Map
+  
+  void *context;
 };
 typedef struct _sensor * Sensor;
 
@@ -32,9 +34,10 @@ typedef struct _sensor * Sensor;
 #include "stimulus.h"
 
 Sensor sensor_new();
-Sensor sensor_init(Sensor s, char *id, Volume volume);
+Sensor sensor_init(Sensor s, char *id, Volume volume, void *context);
 void sensor_free(Sensor s);
 Volume sensor_volume(Sensor s);
+void *sensor_context(Sensor s);
 mapVec sensor_position(Sensor s);
 void sensor_set_position(Sensor s, mapVec p);
 mapVec sensor_facing(Sensor s);

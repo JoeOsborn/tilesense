@@ -32,7 +32,9 @@ Map map_init(
   char *room, 
   mapVec sz, 
   unsigned short *tilemap,
-  char ambientLight
+  char ambientLight,
+  void *ctx,
+  void *baseTileCtx
 ) {
   m->id = malloc(1+strlen(room)*sizeof(char));
   strcpy(m->id, room);
@@ -44,10 +46,11 @@ Map map_init(
     m->tilemap[i] = (tilemap[i] << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
   }
   m->tileset = TCOD_list_new();
-  map_add_tile(m, tile_init(tile_new(), 0));
+  map_add_tile(m, tile_init(tile_new(), 0, baseTileCtx));
   m->ambientLight = ambientLight;
   m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();
+  m->context = ctx;
   return m;
 }
 void map_free(Map m) {
@@ -64,6 +67,13 @@ void map_free(Map m) {
   free(m);
 }
 
+void *map_context(Map m) {
+  return m->context;
+}
+
+char *map_id(Map m) {
+  return m->id;
+}
 void map_add_exit(Map m, Exit ex) {
   TCOD_list_push(m->exits, ex);
 }
@@ -73,6 +83,9 @@ void map_remove_exit(Map m, Exit ex) {
 
 void map_add_tile(Map m, Tile t) {
   TCOD_list_push(m->tileset, t);
+}
+Tile map_get_tile(Map m, int tileIndex) {
+  return TCOD_list_get(m->tileset, tileIndex);
 }
 
 void map_add_object(Map m, Object o) {
@@ -237,7 +250,7 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
   mapVec position = volume_position(vol);
   mapVec size = m->sz, cur;
   unsigned int index, destIndex;
-  unsigned char volFlags, litFlags, newFlags, los;
+  unsigned char litFlags, newFlags, los;
   unsigned short mapItem;
   
   int zstart = CLIP(bpos.z, 0, size.z);

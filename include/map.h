@@ -17,6 +17,7 @@ struct _map {
   char ambientLight;
   TCOD_list_t exits;
   TCOD_list_t objects;
+  void *context;
 };
 typedef struct _map * Map;
 
@@ -28,7 +29,9 @@ Map map_init(
   char *room, 
   mapVec sz, 
   unsigned short *tilemap,
-  char ambientLight
+  char ambientLight,
+  void *ctx,
+  void *baseTileCtx
 );
 void map_free(Map m);
 mapVec map_size(Map m);
@@ -36,6 +39,9 @@ void map_add_exit(Map m, Exit ex);
 void map_remove_exit(Map m, Exit ex);
 void map_get_region(Map m, unsigned short *buf, mapVec start, mapVec end, mapVec bpos, mapVec bsz);
 void map_add_tile(Map m, Tile t);
+
+void *map_context(Map m);
+char *map_id(Map m);
 
 void map_add_object(Map m, Object o);
 void map_remove_object(Map m, Object o);
@@ -48,6 +54,7 @@ int map_object_count(Map m);
 int map_tile_index(Map m, int x, int y, int z);
 unsigned char map_tile_at_index(Map m, int i);
 unsigned char map_tile_at(Map m, int x, int y, int z);
+Tile map_get_tile(Map m, int tileIndex);
 
 void map_move_object(Map m, char *id, mapVec delta);
 void map_turn_object(Map m, char *id, int amt);

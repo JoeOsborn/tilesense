@@ -15,6 +15,8 @@ struct _light {
   
   void * owner; //ugly type hack, recursive blah
   void * map; //ugly type hack, recursive blah
+  
+  void *context;
 };
 
 typedef struct _light * Light;
@@ -23,7 +25,7 @@ typedef struct _light * Light;
 #include "map.h"
 
 Light light_new();
-Light light_init(Light l, char *id, Volume volume, unsigned char attenuation, char intensity);
+Light light_init(Light l, char *id, Volume volume, unsigned char attenuation, char intensity, void *context);
 void light_free(Light l);
 
 Frustum light_frustum(Light l);
@@ -37,6 +39,7 @@ mapVec light_position(Light l);
 void light_set_position(Light l, mapVec pos);
 mapVec light_facing(Light l);
 void light_set_facing(Light l, mapVec facing);
+void *light_context(Light l);
 
 void light_move(Light l, mapVec delta);
 void light_turn(Light l, int amt);

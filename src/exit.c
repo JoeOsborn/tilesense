@@ -5,17 +5,18 @@
 Exit exit_new() {
   return malloc(sizeof(struct _exit));
 }
-Exit exit_init_room(Exit ex, mapVec pos, const char *r, mapVec end) {
+Exit exit_init_room(Exit ex, mapVec pos, const char *r, mapVec end, void *context) {
   ex->type=RoomExit;
   ex->position=pos;
   ex->destRoom = malloc(1+strlen(r)*sizeof(char));
   strcpy(ex->destRoom, r);
   ex->destZone = NULL;
   ex->endPos = end;
+  ex->context = context;
   return ex;
 }
-Exit exit_init_zone(Exit ex, mapVec pos, const char *z, const char *r, mapVec end) {
-  Exit iex = exit_init_room(ex, pos, r, end);
+Exit exit_init_zone(Exit ex, mapVec pos, const char *z, const char *r, mapVec end, void *context) {
+  Exit iex = exit_init_room(ex, pos, r, end, context);
   iex->type=ZoneExit;
   iex->destZone = malloc(1+strlen(z)*sizeof(char));
   strcpy(iex->destZone, z);
@@ -41,4 +42,7 @@ mapVec exit_pos(Exit ex) {
 }
 mapVec exit_end(Exit ex) {
   return ex->endPos;
+}
+void *exit_context(Exit ex) {
+  return ex->context;
 }
