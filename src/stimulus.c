@@ -62,8 +62,7 @@ Stimulus stimulus_init_tile_lit_change(Stimulus s, unsigned char *newTiles, mapV
 Stimulus stimulus_init_obj_sight_change(Stimulus s, Object obj, unsigned char newFlags, stimtype type, void *ctx) {
   s->stim.obj_sight_change.position = object_position(obj);
   s->stim.obj_sight_change.facing = object_facing(obj);
-  s->stim.obj_sight_change.id = malloc(1+strlen(object_id(obj)));
-  strcpy(s->stim.obj_sight_change.id, object_id(obj));
+  s->stim.obj_sight_change.id = strdup(object_id(obj));
   s->stim.obj_sight_change.newFlags = newFlags;
   s->stim.obj_sight_change.context = ctx;
   return stimulus_init_type(s, type);

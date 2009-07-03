@@ -91,8 +91,7 @@ void flagschema_insert(FlagSchema fs, char *path, unsigned int bitsize) {
   if(next) { next++; }
   if(!next) {
     struct _flag_schema_entry *entry = calloc(1, sizeof(struct _flag_schema_entry));
-    entry->label = malloc(strlen(path) * sizeof(char) + 1);
-    strcpy(entry->label, path);
+    entry->label = strdup(path);
     entry->bitsize = bitsize;
     entry->offset = flagschema_net_size(fs);
     entry->children = TCOD_list_new();
@@ -104,8 +103,7 @@ void flagschema_insert(FlagSchema fs, char *path, unsigned int bitsize) {
     struct _flag_schema_entry *treeTop = flagschema_path_find_entry(fs, firstPart);
     if(!treeTop) {
       treeTop = calloc(1, sizeof(struct _flag_schema_entry));
-      treeTop->label = calloc(strlen(firstPart) + 1, sizeof(char));
-      strcpy(treeTop->label, firstPart);
+      treeTop->label = strdup(firstPart);
       treeTop->bitsize = 0;
       treeTop->offset = 0;
       treeTop->children = TCOD_list_new();

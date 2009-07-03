@@ -26,7 +26,7 @@ typedef struct _map * Map;
 Map map_new();
 Map map_init(
   Map m, 
-  char *room, 
+  char *id, 
   mapVec sz, 
   unsigned short *tilemap,
   char ambientLight,

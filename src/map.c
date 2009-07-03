@@ -29,15 +29,14 @@ Map map_new() {
 }
 Map map_init(
   Map m, 
-  char *room, 
+  char *id, 
   mapVec sz, 
   unsigned short *tilemap,
   char ambientLight,
   void *ctx,
   void *baseTileCtx
 ) {
-  m->id = malloc(1+strlen(room)*sizeof(char));
-  strcpy(m->id, room);
+  m->id = strdup(id);
   m->sz = sz;
   m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(short));
   memcpy(m->tilemap, tilemap, sz.x*sz.y*sz.z*sizeof(short));

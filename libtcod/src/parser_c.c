@@ -53,18 +53,19 @@ static const char *symbols[] = {
 
 static TCOD_parser_listener_t *listener=NULL;
 
-static bool default_new_struct(TCOD_parser_struct_t str,const char *name);
-static bool default_new_flag(const char *name);
-static bool default_new_property(const char *propname, TCOD_value_type_t type, TCOD_value_t value);
-static bool default_end_struct(TCOD_parser_struct_t str, const char *name);
-static void default_error(const char *msg);
+static bool default_new_struct(TCOD_parser_struct_t str,const char *name, void *ctx);
+static bool default_new_flag(const char *name, void *ctx);
+static bool default_new_property(const char *propname, TCOD_value_type_t type, TCOD_value_t value, void *ctx);
+static bool default_end_struct(TCOD_parser_struct_t str, const char *name, void *ctx);
+static void default_error(const char *msg, void *ctx);
 
 static TCOD_parser_listener_t default_listener = {
 	default_new_struct,
 	default_new_flag,
 	default_new_property,
 	default_end_struct,
-	default_error
+	default_error,
+	NULL
 };
 
 static bool string_copy(char *dest, char *source, int len) {
@@ -589,7 +590,7 @@ void TCOD_parser_run(TCOD_parser_t parser,  const char *filename, TCOD_parser_li
 	if (!TCOD_lex_set_data_file(lex,(char *)filename)) {
 		char buf[1024];
 		sprintf(buf,"Fatal error : %s\n",TCOD_lex_get_last_error());
-		listener->error(buf);
+		listener->error(buf, listener->context);
 		return;
 	}
 	while (1) {
@@ -641,7 +642,7 @@ void TCOD_parser_run(TCOD_parser_t parser,  const char *filename, TCOD_parser_li
 			TCOD_parser_error("Parser::parse : unknown entity type %s",type);
 			return;
 		} else {
-			if (!listener->new_struct((TCOD_parser_struct_t)def,named ? strchr(id,'#')+1 : NULL )) return;
+			if (!listener->new_struct((TCOD_parser_struct_t)def,named ? strchr(id,'#')+1 : NULL , listener->context)) return;
 			if (!TCOD_parser_parse_entity(p,def)) return;
 		}
 	}
@@ -658,13 +659,13 @@ typedef struct {
 	TCOD_value_t value;
 } prop_t;
 static char cur_prop_name[512]="";
-static bool default_new_struct(TCOD_parser_struct_t str,const char *name) {
+static bool default_new_struct(TCOD_parser_struct_t str,const char *name, void *ctx) {
 	if ( cur_prop_name[0] ) strcat(cur_prop_name,".");
 	strcat(cur_prop_name,((TCOD_struct_int_t *)str)->name);
 	return true;
 }
 
-static bool default_new_flag(const char *name) {
+static bool default_new_flag(const char *name, void *ctx) {
 	char tmp[512];
 	prop_t *prop=(prop_t *)calloc(sizeof(prop_t),1);
 	sprintf(tmp,"%s.%s",cur_prop_name,name);
@@ -675,7 +676,7 @@ static bool default_new_flag(const char *name) {
 	return true;
 }
 
-static bool default_new_property(const char *propname, TCOD_value_type_t type, TCOD_value_t value) {
+static bool default_new_property(const char *propname, TCOD_value_type_t type, TCOD_value_t value, void *ctx) {
 	char tmp[512];
 	prop_t *prop=(prop_t *)calloc(sizeof(prop_t),1);
 	sprintf(tmp,"%s.%s",cur_prop_name,propname);
@@ -686,14 +687,14 @@ static bool default_new_property(const char *propname, TCOD_value_type_t type, T
 	return true;
 }
 
-static bool default_end_struct(TCOD_parser_struct_t str, const char *name) {
+static bool default_end_struct(TCOD_parser_struct_t str, const char *name, void *ctx) {
 	char *ptr=strrchr(cur_prop_name,'.');
 	if ( ptr ) *ptr='\0';
 	else cur_prop_name[0]='\0';
 	return true;
 }
 
-static void default_error(const char *msg) {
+static void default_error(const char *msg, void *ctx) {
 	TCOD_fatal_nopar(msg);
 }
 

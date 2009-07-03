@@ -6,8 +6,7 @@ Light light_new() {
   return malloc(sizeof(struct _light));
 }
 Light light_init(Light l, char *id, Volume volume, unsigned char attenuation, char intensity, void *context) {
-  l->id = malloc(1+strlen(id));
-  strcpy(l->id, id);
+  l->id = strdup(id);
   l->attenuation = attenuation;
   l->intensity = intensity;
   l->volume = volume;

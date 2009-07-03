@@ -109,11 +109,12 @@ TCODLIB_API TCOD_value_type_t TCOD_struct_get_type(TCOD_parser_struct_t def, con
 
 /* parser listener */
 typedef struct {
-	bool (*new_struct)(TCOD_parser_struct_t str,const char *name);
-	bool (*new_flag)(const char *name);
-	bool (*new_property)(const char *propname, TCOD_value_type_t type, TCOD_value_t value);
-	bool (*end_struct)(TCOD_parser_struct_t str, const char *name);
-	void (*error)(const char *msg);
+	bool (*new_struct)(TCOD_parser_struct_t str,const char *name, void *ctx);
+	bool (*new_flag)(const char *name, void *ctx);
+	bool (*new_property)(const char *propname, TCOD_value_type_t type, TCOD_value_t value, void *ctx);
+	bool (*end_struct)(TCOD_parser_struct_t str, const char *name, void *ctx);
+	void (*error)(const char *msg, void *ctx);
+  void *context;
 } TCOD_parser_listener_t;
 
 /* a custom type parser */

@@ -8,16 +8,9 @@
 //consider how to move forward on this.
 //defer it for now.
 
-typedef enum {
-  RoomExit,
-  ZoneExit
-  } exitType;
-
 struct _exit {
-  exitType type;
   mapVec position;
-  char *destZone;
-  char *destRoom;
+  char *destMap;
   mapVec endPos;
   
   void *context;
@@ -27,11 +20,8 @@ typedef struct _exit * Exit;
 
 Exit exit_new();
 Exit exit_init_room(Exit ex, mapVec pos, const char *r, mapVec end, void *context);
-Exit exit_init_zone(Exit ex, mapVec pos, const char *z, const char *r, mapVec end, void *context);
 void exit_free(Exit ex);
-exitType exit_type(Exit ex);
-char *exit_dest_room(Exit ex);
-char *exit_dest_zone(Exit ex);
+char *exit_dest_map(Exit ex);
 mapVec exit_pos(Exit ex);
 mapVec exit_end(Exit ex);
 void *exit_context(Exit ex);

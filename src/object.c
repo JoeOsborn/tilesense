@@ -9,8 +9,7 @@ Object object_new() {
 }
 
 Object object_init(Object o, char *id, mapVec pos, mapVec face, Map m, void *context) {
-  o->id = malloc(1+strlen(id)*sizeof(char));
-  strcpy(o->id, id);
+  o->id = strdup(id);
   o->position = pos;
   o->facing = face;
   o->map = m;
