@@ -5,7 +5,6 @@ FLAGS=-ggdb -std=c99
 .SUFFIXES: .o .h .c
 
 C_OBJS=\
-  $(SRCDIR)/bresenham3_c.o \
   $(SRCDIR)/exit.o \
   $(SRCDIR)/flagset.o \
   $(SRCDIR)/geom.o \
@@ -18,7 +17,6 @@ C_OBJS=\
   $(SRCDIR)/volume.o
 
 HEADERS=\
-  $(INCDIR)/bresenham3.h \
   $(INCDIR)/exit.h \
   $(INCDIR)/flagset.h \
   $(INCDIR)/geom.h \

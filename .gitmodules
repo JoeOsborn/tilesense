@@ -1,0 +1,3 @@
+[submodule "libtcod"]
+	path = libtcod
+	url = git@github.com:JoeOsborn/libtcod.git
