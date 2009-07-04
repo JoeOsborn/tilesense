@@ -1,10 +1,11 @@
 #include "map.h"
 
 #include <stdlib.h>
+#include <libtcod.h>
+
 #include "sensor.h"
 #include "stimulus.h"
 #include "volume.h"
-#include <libtcod.h>
 
 /*
 next
@@ -48,7 +49,7 @@ Also, if there's a way to remove some void*s from my mutually recursive dependen
 
 Map createmap() {
   Map m = map_new();
-  unsigned short tileMap[] = {
+  unsigned char tileMap[] = {
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 2, 2, 2, 2, 2, 2, 2,
@@ -134,42 +135,42 @@ void drawtiles(Map m, unsigned char *buf, Sensor s, mapVec pos, mapVec size) {
       for(int x = xstart; x < xend; x++) {
         index = tile_index(x, y, z, msz, borig, bsz);
         flags = buf[index];
-        TCOD_console_print_left(NULL, 0, 18, TCOD_BKGND_NONE, "%i, %i, %i", map_item_lit(flags), map_item_in_volume(flags), map_item_los(flags));
+        TCOD_console_print_left(NULL, 0, 18, "%i, %i, %i", map_item_lit(flags), map_item_in_volume(flags), map_item_los(flags));
         tileIndex = map_tile_at(m, x, y, z);
         drawX = x*2+z*((msz.x*2)+1);
         drawY = y;
-        //TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, "%i", index);
+        //TCOD_console_print_left(NULL, drawX, drawY, "%i", index);
         if(map_item_visible(flags)) {
            //visible and lit and in volume
-           TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, "%i", tileIndex);
+           TCOD_console_print_left(NULL, drawX, drawY, "%i", tileIndex);
         }
         // else if(!map_item_lit(flags) && map_item_in_volume(flags) && map_item_los(flags)) {
         //   //not lit and viewable
-        //   TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, "_");
+        //   TCOD_console_print_left(NULL, drawX, drawY, "_");
         // }
         // else if(!map_item_lit(flags) && map_item_in_volume(flags) && !map_item_los(flags)) {
         //   //not lit and not los
-        //   TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, ",");
+        //   TCOD_console_print_left(NULL, drawX, drawY, ",");
         // }
         // else if(!map_item_lit(flags) && !map_item_in_volume(flags) && map_item_los(flags)) {
         //   //not lit and not in vol
-        //   TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, "d");
+        //   TCOD_console_print_left(NULL, drawX, drawY, "d");
         // }
         // else if(map_item_lit(flags) && !map_item_in_volume(flags) && map_item_los(flags)) {
         //   //lit and in los, but not in vol
-        //   TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, "a");
+        //   TCOD_console_print_left(NULL, drawX, drawY, "a");
         // }
         // else if(map_item_lit(flags) && map_item_in_volume(flags) && !map_item_los(flags)) {
         //   //lit and in vol, but not in los
-        //   TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, "b");
+        //   TCOD_console_print_left(NULL, drawX, drawY, "b");
         // }
         // else if(map_item_lit(flags) && !map_item_in_volume(flags) && !map_item_los(flags)) {
         //   //lit and not in vol or los (or los wasn't checked)
-        //   TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, ".");
+        //   TCOD_console_print_left(NULL, drawX, drawY, ".");
         // }
         // else if(!map_item_lit(flags) && !map_item_in_volume(flags) && !map_item_los(flags)) { 
         //   //not lit, in vol, or in los
-        //   TCOD_console_print_left(NULL, drawX, drawY, TCOD_BKGND_NONE, "x");
+        //   TCOD_console_print_left(NULL, drawX, drawY, "x");
         // }
       }
     }
@@ -181,9 +182,9 @@ void draw_object(Stimulus st) {
   mapVec pos = stimulus_obj_sight_change_get_position(st);
   char *id = stimulus_obj_sight_change_get_id(st);
   if(!map_item_visible(visflags)) {
-    TCOD_console_print_left(NULL, pos.x*2, pos.y, TCOD_BKGND_NONE, "X");
+    TCOD_console_print_left(NULL, pos.x*2, pos.y, "X");
   } else {
-    TCOD_console_print_left(NULL, pos.x*2, pos.y, TCOD_BKGND_NONE, id);
+    TCOD_console_print_left(NULL, pos.x*2, pos.y, id);
   }
 }
 
@@ -193,13 +194,13 @@ void drawstimuli(Map m, Sensor s) {
   mapVec pos, size, oldPt, delta;
   unsigned char visflags;
   if(TCOD_list_size(stims) > 0) {
-    TCOD_console_print_left(NULL, 0, 10, TCOD_BKGND_NONE, "                            ");
+    TCOD_console_print_left(NULL, 0, 10, "                            ");
   }
   for(int i = 0; i < TCOD_list_size(stims); i++) {
     //this is a very naive approach that completely ignores the possibility of overdraw and 'forgets' object positions
     Stimulus st = TCOD_list_get(stims, i);
     stimtype type = stimulus_type(st);
-    TCOD_console_print_left(NULL, i*2, 10, TCOD_BKGND_NONE, "s%i", type);
+    TCOD_console_print_left(NULL, i*2, 10, "s%i", type);
     switch(type) {
       case StimTileLitChange:
       case StimTileVisChange:
@@ -219,13 +220,13 @@ void drawstimuli(Map m, Sensor s) {
         pos = stimulus_obj_sight_change_get_position(st);
         delta = stimulus_obj_moved_get_dir(st);
         oldPt = mapvec_subtract(pos, delta);
-        TCOD_console_print_left(NULL, oldPt.x*2, oldPt.y, TCOD_BKGND_NONE, "x");
+        TCOD_console_print_left(NULL, oldPt.x*2, oldPt.y, "x");
         draw_object(st);
-        TCOD_console_print_left(NULL, 0, 15, TCOD_BKGND_NONE, "got move");
+        TCOD_console_print_left(NULL, 0, 15, "got move");
         break;
       case StimGeneric:
       default:
-        TCOD_console_print_left(NULL, i*9, 16, TCOD_BKGND_NONE, "generic %d", i);
+        TCOD_console_print_left(NULL, i*9, 16, "generic %d", i);
         break;
     }
     stimulus_free(st);
@@ -238,7 +239,7 @@ void drawmap(Map m, Object o) {
   for(int i = 0; i < object_sensor_count(o); i++) {
     s = object_get_sensor(o, i);
     drawstimuli(m, s);
-    TCOD_console_print_left(NULL, 0, 13+i, TCOD_BKGND_NONE, "<%f %f %f>", sensor_facing(s).x, sensor_facing(s).y, sensor_facing(s).z);
+    TCOD_console_print_left(NULL, 0, 13+i, "<%f %f %f>", sensor_facing(s).x, sensor_facing(s).y, sensor_facing(s).z);
   }
 }
 
@@ -246,7 +247,7 @@ void drawmap(Map m, Object o) {
 
 void assert(int fact) {
   if(!fact) { 
-    exit(-1); 
+    abort(); 
   }
 }
 
@@ -396,7 +397,7 @@ int main(int argc, char **argv) {
 		  TCOD_console_clear(NULL);
 		}
 		drawmap(m, playerObj);
-    TCOD_console_print_left(NULL, object_position(playerObj).x*2, object_position(playerObj).y, TCOD_BKGND_NONE,"@");
+    TCOD_console_print_left(NULL, object_position(playerObj).x*2, object_position(playerObj).y,"@");
 		/* update the game screen */
 		TCOD_console_flush();
     if(key.vk == TCODK_RIGHT) {

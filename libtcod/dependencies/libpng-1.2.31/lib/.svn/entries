@@ -1,40 +1,0 @@
-8
-
-dir
-127
-https://libtcod.googlecode.com/svn/trunk/dependencies/libpng-1.2.31/lib
-https://libtcod.googlecode.com/svn
-
-
-
-2009-02-02T04:15:26.647974Z
-102
-michael.derosa
-
-
-svn:special svn:externals svn:needs-lock
-
-
-
-
-
-
-
-
-
-
-
-4d05d478-1c51-0410-9a45-7542d1dad9db
-
-linux
-dir
-
-mingw
-dir
-
-msvc
-dir
-
-osx
-dir
-

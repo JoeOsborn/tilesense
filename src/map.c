@@ -31,18 +31,18 @@ Map map_init(
   Map m, 
   char *id, 
   mapVec sz, 
-  unsigned short *tilemap,
-  char ambientLight,
+  unsigned char *tilemap,
+  unsigned char ambientLight,
   void *ctx,
   void *baseTileCtx
 ) {
   m->id = strdup(id);
   m->sz = sz;
-  m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(short));
-  memcpy(m->tilemap, tilemap, sz.x*sz.y*sz.z*sizeof(short));
+  m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(unsigned short));
+  memcpy(m->tilemap, tilemap, sz.x*sz.y*sz.z*sizeof(unsigned short));
   for(int i = 0; i < sz.x*sz.y*sz.z; i++) {
     #warning not really sure about this ambient light stuff, etc.
-    m->tilemap[i] = (tilemap[i] << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
+    m->tilemap[i] = ((unsigned short)(tilemap[i]) << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
   }
   m->tileset = TCOD_list_new();
   map_add_tile(m, tile_init(tile_new(), 0, baseTileCtx));

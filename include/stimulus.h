@@ -2,7 +2,6 @@
 #define _STIMULUS_H
 
 #include <libtcod.h>
-#include <list.h>
 #include <sys/time.h>
 
 #include "geom.h"

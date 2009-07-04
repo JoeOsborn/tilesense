@@ -3,7 +3,6 @@
 
 #include "geom.h"
 #include <libtcod.h>
-#include <list.h>
 #include "volume.h"
 
 //add on an extra "flags" Flagset for user purposes?

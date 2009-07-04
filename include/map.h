@@ -2,7 +2,6 @@
 #define _MAP_H
 
 #include <libtcod.h>
-#include <list.h>
 
 #include "geom.h"
 #include "exit.h"
@@ -28,8 +27,8 @@ Map map_init(
   Map m, 
   char *id, 
   mapVec sz, 
-  unsigned short *tilemap,
-  char ambientLight,
+  unsigned char *tilemap,
+  unsigned char ambientLight,
   void *ctx,
   void *baseTileCtx
 );

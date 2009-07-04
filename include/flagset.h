@@ -2,7 +2,6 @@
 #define _FLAGSET_H
 
 #include <libtcod.h>
-#include <list.h>
 
 //describes how a number of size 1-32 bits is laid out within a bitfield of arbitrary size.
 //the whole tree describes an entire such bitfield and set of such numbers.

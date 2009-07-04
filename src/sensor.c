@@ -80,7 +80,7 @@ void sensor_sense(Sensor s) {
   memset(s->vistiles, 0, sz.x*sz.y*sz.z*sizeof(unsigned char));
   map_get_visible_tiles(m, s->vistiles, s->volume, pos, sz);
   Stimulus vistiles = stimulus_init_tile_vis_change(stimulus_new(), s->vistiles, pos, sz);
-  TCOD_console_print_left(NULL, 0, 20, TCOD_BKGND_NONE, "p {%f, %f, %f}, s {%f, %f, %f}", pos.x, pos.y, pos.z, sz.x, sz.y, sz.z);
+  // TCOD_console_print_left(NULL, 0, 20, "p {%f, %f, %f}, s {%f, %f, %f}", pos.x, pos.y, pos.z, sz.x, sz.y, sz.z);
   
   TCOD_list_push(s->stimuli, vistiles);
   

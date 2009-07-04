@@ -2,7 +2,6 @@
 #define _OBJECT_H
 
 #include <libtcod.h>
-#include <list.h>
 #include "geom.h"
 
 //add on an extra "flags" Flagset for user purposes?
