@@ -51,41 +51,41 @@ Map createmap() {
   Map m = map_new();
   unsigned char tileMap[] = {
     2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 8, 8, 8, 8, 8, 8, 2,
+    2, 8, 8, 8, 8, 8, 8, 2, //z3 should be invisible from z2, but z2 should be visible from z3
+    2, 8, 8, 8, 8, 8, 8, 2, //8 lets light down through it, but not up through it
+    2, 8, 8, 8, 8, 8, 8, 2,
+    2, 8, 8, 8, 8, 8, 8, 2,
+    2, 8, 8, 8, 8, 8, 8, 2,
     2, 2, 2, 2, 2, 2, 2, 2,
     
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 0, 0, 0, 0, 0, 0, 2,
     2, 0, 0, 0, 0, 0, 0, 2,
     2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
+    2, 0, 0, 0, 0, 0, 0, 2, 
     2, 0, 0, 0, 0, 0, 0, 2,
     2, 0, 0, 0, 0, 0, 0, 2,
     2, 2, 2, 2, 2, 2, 2, 2,    
     
     2, 2, 2, 2, 2, 2, 2, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
+    2, 7, 7, 7, 7, 7, 7, 2,
+    2, 7, 7, 7, 7, 7, 7, 2, //7 lets light go down through it, but not up through it -- so z1 should be visible from z0
+    2, 7, 7, 7, 7, 7, 7, 2,
+    2, 7, 7, 7, 7, 7, 7, 2,
+    2, 7, 7, 7, 7, 7, 7, 2,
+    2, 7, 7, 7, 7, 7, 7, 2,
     2, 0, 0, 2, 2, 2, 2, 2,    
     
     2, 2, 2, 2, 2, 2, 2, 2,
     2, 1, 1, 1, 1, 1, 1, 1,
-    2, 1, 1, 1, 1, 1, 1, 1,
-    2, 1, 1, 2, 2, 1, 1, 2,
-    2, 1, 1, 2, 2, 1, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 2,
+    2, 1, 3, 5, 5, 4, 1, 1,
+    2, 1, 3, 1, 1, 4, 1, 2,
+    2, 1, 3, 1, 1, 4, 1, 2,
+    2, 1, 3, 6, 6, 4, 1, 2,
     2, 1, 1, 1, 1, 1, 1, 2,
     2, 1, 1, 2, 1, 1, 2, 2   
-    };
+  };
   m = map_init(m, 
     "test_room", 
     (mapVec){8, 8, 4}, 
@@ -104,8 +104,44 @@ Map createmap() {
     tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 15, 15, 15, 15, 15),
     NULL
   );
+  Tile leftTile = tile_init( //light can come from x+ to x-
+    tile_new(), 
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 15, 0, 0, 15, 15),
+    NULL
+  );
+  Tile rightTile = tile_init( //light can come from x- to x+
+    tile_new(), 
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 0, 0, 0, 15, 15),
+    NULL
+  );
+  Tile upTile = tile_init( //light can come from y+ to y-
+    tile_new(), 
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 15, 15, 15),
+    NULL
+  );
+  Tile downTile = tile_init( //light can come from y- to y+
+    tile_new(), 
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 15, 0, 15, 15),
+    NULL
+  );
+  Tile passZPlus = tile_init( //light can come from z- to z+ (Weird!)
+    tile_new(),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 0),
+    NULL
+  );
+  Tile passZMinus = tile_init( //light can come from z+ to z-, but nott he other way (weird!)
+    tile_new(),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 15),
+    NULL
+  );
   map_add_tile(m, floorTile);
   map_add_tile(m, wallTile);
+  map_add_tile(m, leftTile);
+  map_add_tile(m, rightTile);
+  map_add_tile(m, upTile);
+  map_add_tile(m, downTile);
+  map_add_tile(m, passZPlus);
+  map_add_tile(m, passZMinus);
   
   map_add_object(m, object_init(object_new(), "a", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
   map_add_object(m, object_init(object_new(), "b", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
@@ -321,7 +357,7 @@ int main(int argc, char **argv) {
   Map m = createmap();
   Object playerObj = object_init(object_new(), 
     "@", 
-    (mapVec){3, 1, 0}, 
+    (mapVec){3, 1, 1}, 
     (mapVec){1, 1, 0},
     m,
     NULL
@@ -374,10 +410,11 @@ int main(int argc, char **argv) {
     "player", 
     sphere_init(sphere_new(),
       mapvec_zero, 
-      4
+      6
     ),
     NULL
   );
+  
   object_add_sensor(playerObj, player);
     
   object_sense(playerObj);
@@ -397,7 +434,7 @@ int main(int argc, char **argv) {
 		  TCOD_console_clear(NULL);
 		}
 		drawmap(m, playerObj);
-    TCOD_console_print_left(NULL, object_position(playerObj).x*2, object_position(playerObj).y,"@");
+    TCOD_console_print_left(NULL, object_position(playerObj).x*2+object_position(playerObj).z*((map_size(m).x*2)+1), object_position(playerObj).y,"@");
 		/* update the game screen */
 		TCOD_console_flush();
     if(key.vk == TCODK_RIGHT) {
@@ -417,6 +454,12 @@ int main(int argc, char **argv) {
           break;
         case 'd':
           map_move_object(m, "@", (mapVec){1, 0, 0});
+          break;
+        case '<':
+          map_move_object(m, "@", (mapVec){0, 0, 1});
+          break;
+        case '>':
+          map_move_object(m, "@", (mapVec){0, 0, -1});
           break;
         case 'i':
           map_move_object(m, "a", (mapVec){0, -1, 0});

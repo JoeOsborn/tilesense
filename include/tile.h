@@ -6,8 +6,8 @@
 
 Flagset tile_opacity_flagset_make();
 Flagset tile_opacity_flagset_set(Flagset fs, 
-  unsigned char xm, unsigned char xp, 
-  unsigned char ym, unsigned char yp, 
+  unsigned char xm, unsigned char xp,  //light leaving to the left, light leaving to the right
+  unsigned char ym, unsigned char yp,  //etc...
   unsigned char zm, unsigned char zp
 );
 

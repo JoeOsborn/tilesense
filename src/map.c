@@ -43,7 +43,14 @@ Map map_init(
     m->tilemap[i] = ((unsigned short)(tilemap[i]) << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
   }
   m->tileset = TCOD_list_new();
-  map_add_tile(m, tile_init(tile_new(), tile_opacity_flagset_make(), baseTileCtx));
+  map_add_tile(m, tile_init(tile_new(), 
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
+      0,0,
+      0,0,
+      0,0
+    ), 
+    baseTileCtx)
+  );
   m->ambientLight = ambientLight;
   m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();
@@ -171,25 +178,54 @@ Tile map_get_tiledef(Map m, int i) {
   return TCOD_list_get(m->tileset, i);
 }
 
-//returns the visibility of the previous tile (x,y,z) based on the visibility of the next tile in the path.
+//returns the los of the previous tile (x,y,z) based on the blockage of the next tile in the path.
 unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz, int pX, int pY, int pZ) {
+  //this is fundamentally wrong -- in order for light to pass from A to B in dir X:
+  //[A->][B]
+  //B must _permit_ light from the opposite direction.
+  //[A][->B]
+  //This problem exhibits worst in the z dimension, which also conflates exit and intake.
+  
+  //REWRITE THIS JUNK!  provide higher-res los information, at least in the intermediate stages -- seeing the underside of a tile is different from seeing the top of the tile.
+  //also, seeing the top of a tile counts as a kind of los... this needs more resolution!
+  
   //try to trace to position through tiles that allow light to pass
   int x, y, z;
   //if the next tile is the position...
-  if(TCOD_line3_step_mt(&x, &y, &z, bd)) {
-    //the previous tile is in los.
-    return 0x03;
+  bool done = TCOD_line3_step_mt(&x, &y, &z, bd);
+  if(done) {
+    x = bd->destx;
+    y = bd->desty;
+    z = bd->destz;
   }
   unsigned int index      = map_tile_index(m, x, y, z);
   unsigned short mapItem  = m->tilemap[index];
   unsigned char tileIndex = MAP_IND(mapItem);
   Tile tileDef            = map_get_tiledef(m, tileIndex);
-  Direction direction     = direction_light_between(pX,pY,pZ,x,y,z);
-  unsigned char blockage  = tile_opacity_direction(tileDef, direction);
+  Direction direction     = direction_light_between(x,y,z,pX,pY,pZ);
   
-  unsigned int destIndex    = tile_index(x, y, z, map_size(m), bpos, bsz);
-  unsigned char flg         = flags[destIndex];
-  unsigned char los         = MAP_LOS(flg);
+  //light leaving out of the next tile towards the previous tile
+  unsigned char blockage  = tile_opacity_direction(tileDef, direction);
+
+  if(done) {
+    //the previous tile is in los if the next tile does not block it.
+    if(blockage >= 10) { //refactor this stuff! this is really not quite right -- should use amount of light transfer.
+      //the previous tile is not in los.
+      return 0x01;
+    //and the next tile is partially in los...
+    } else if(blockage >= 0x05 && blockage < 0x10) {
+      //the previous tile is partially in los (later, use subtraction instead of a direct set, use higher-bitdepth los (see comment on previous if))
+      return 0x02;
+    //and the next tile does not block los...
+    } else {
+      //the previous tile is certainly in los
+      return 0x03;
+    }
+  }
+  
+  unsigned int destIndex  = tile_index(x, y, z, map_size(m), bpos, bsz);
+  unsigned char flg       = flags[destIndex];
+  unsigned char los       = MAP_LOS(flg);  
   
   //if the next tile is not in los...
   if(los == 0x01) {
@@ -199,7 +235,7 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   //if the next tile is in los...
   if(los > 0x01)
   {
-    //and the next tile is a wall...
+    //and the next tile won't permit light towards us...
     if(blockage >= 10) { //this is really not quite right -- should use amount of light transfer.
       //the previous tile is not in los.
       return 0x01;
@@ -225,7 +261,7 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   //if the next tile is in los...
   if(reclos > 0x01)
   {
-    //and the next tile is a wall...
+    //and the next tile blocks light in this direction...
     if(blockage >= 10) {
       //the previous tile is not in los.
       return 0x01;
@@ -284,6 +320,7 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
           TCOD_bresenham3_data_t bd;
           TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
           //this is a recursive fn that is also destructive to flags.  keep that in mind!
+          //trace from this tile to the sensor
           los = map_trace_light(m, flags, &bd, bpos, bsz, x, y, z);
           newFlags = MAP_SET_LOS(newFlags, los);
           flags[destIndex] = newFlags;
