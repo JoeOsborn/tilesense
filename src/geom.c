@@ -3,6 +3,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+Direction direction_light_between(float pX, float pY, float pZ, float x, float y, float z) {
+  Direction direction = DirNone;
+  if(x > pX) { //moving right, so "light comes from the left"
+    direction |= DirXMinus;
+  }
+  if(x < pX) { //see above
+    direction |= DirXPlus;
+  }
+  if(y > pY) { //moving foreward, so "light comes from the back" (in y)
+    direction |= DirYMinus;
+  }
+  if(y < pY) {
+    direction |= DirYPlus;
+  }
+  if(z > pZ) {
+    direction |= DirZMinus;
+  }
+  if(z < pZ) {
+    direction |= DirZPlus;
+  }
+  return direction;
+}
+
 mapVec mapvec_zero = {0, 0, 0};
 
 int mapvec_equal(mapVec a, mapVec b) {

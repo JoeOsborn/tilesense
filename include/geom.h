@@ -7,6 +7,21 @@
 #define CLIP(b, a, c) (b < a ? a : (b > c ? c : b))
 
 typedef enum {
+  DirNone   =  0,
+  DirXMinus =  1,
+  DirXPlus  =  2,
+  DirX      =  3,
+  DirYMinus =  4,
+  DirYPlus  =  8,
+  DirY      = 12,
+  DirZMinus = 16,
+  DirZPlus  = 32,
+  DirZ      = 48
+} Direction;
+
+Direction direction_light_between(float pX, float pY, float pZ, float x, float y, float z);
+
+typedef enum {
   NegativeHalfSpace=-1,
   OnPlane=0,
   PositiveHalfSpace=1

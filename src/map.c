@@ -1,9 +1,7 @@
 #include "map.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include "bresenham3.h"
-
-#include <ncurses.h>
 
 #define MAP_TILE_PART       0xFF00 //xxxxxxxx00000000
 #define MAP_FLAG_PART       0x00FF //00000000xxxxxxxx
@@ -45,7 +43,7 @@ Map map_init(
     m->tilemap[i] = ((unsigned short)(tilemap[i]) << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
   }
   m->tileset = TCOD_list_new();
-  map_add_tile(m, tile_init(tile_new(), 0, baseTileCtx));
+  map_add_tile(m, tile_init(tile_new(), tile_opacity_flagset_make(), baseTileCtx));
   m->ambientLight = ambientLight;
   m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();
@@ -174,7 +172,7 @@ Tile map_get_tiledef(Map m, int i) {
 }
 
 //returns the visibility of the previous tile (x,y,z) based on the visibility of the next tile in the path.
-unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz) {
+unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz, int pX, int pY, int pZ) {
   //try to trace to position through tiles that allow light to pass
   int x, y, z;
   //if the next tile is the position...
@@ -186,8 +184,9 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   unsigned short mapItem  = m->tilemap[index];
   unsigned char tileIndex = MAP_IND(mapItem);
   Tile tileDef            = map_get_tiledef(m, tileIndex);
-  unsigned char blockage  = tile_opacity(tileDef);
-
+  Direction direction     = direction_light_between(pX,pY,pZ,x,y,z);
+  unsigned char blockage  = tile_opacity_direction(tileDef, direction);
+  
   unsigned int destIndex    = tile_index(x, y, z, map_size(m), bpos, bsz);
   unsigned char flg         = flags[destIndex];
   unsigned char los         = MAP_LOS(flg);
@@ -201,12 +200,12 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   if(los > 0x01)
   {
     //and the next tile is a wall...
-    if(blockage == 0x03) {
+    if(blockage >= 10) { //this is really not quite right -- should use amount of light transfer.
       //the previous tile is not in los.
       return 0x01;
     //and the next tile is partially in los...
-    } else if(blockage > 0x00 && blockage < 0x03) {
-      //the previous tile is partially in los (later, use subtraction instead of a direct set)
+    } else if(blockage >= 0x05 && blockage < 0x10) {
+      //the previous tile is partially in los (later, use subtraction instead of a direct set, use higher-bitdepth los (see comment on previous if))
       return 0x02;
     //and the next tile does not block los...
     } else {
@@ -216,7 +215,7 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   }
   //otherwise, we're tracing through a tile with unknown los.
   //trace to the next tile, which may have a known los.
-  unsigned char reclos = map_trace_light(m, flags, bd, bpos, bsz);
+  unsigned char reclos = map_trace_light(m, flags, bd, bpos, bsz, x, y, z);
   flags[destIndex] = MAP_SET_LOS(flags[destIndex], reclos); 
   //if the next tile is not in los...
   if(reclos == 0x01) {
@@ -227,11 +226,11 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   if(reclos > 0x01)
   {
     //and the next tile is a wall...
-    if(blockage == 0x03) {
+    if(blockage >= 10) {
       //the previous tile is not in los.
       return 0x01;
     //and the next tile is partially in los...
-    } else if(blockage > 0x00 && blockage < 0x03) {
+    } else if(blockage >= 5 && blockage < 10) {
       //the previous tile is partially in los (later, use subtraction instead of a direct set)
       return 0x02;
     //and the next tile does not block los...
@@ -285,7 +284,7 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
           TCOD_bresenham3_data_t bd;
           TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
           //this is a recursive fn that is also destructive to flags.  keep that in mind!
-          los = map_trace_light(m, flags, &bd, bpos, bsz);
+          los = map_trace_light(m, flags, &bd, bpos, bsz, x, y, z);
           newFlags = MAP_SET_LOS(newFlags, los);
           flags[destIndex] = newFlags;
         }

@@ -96,12 +96,12 @@ Map createmap() {
   ); 
   Tile floorTile = tile_init(
     tile_new(), 
-    0,
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 15),
     NULL
   );
   Tile wallTile = tile_init(
     tile_new(), 
-    3,
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 15, 15, 15, 15, 15),
     NULL
   );
   map_add_tile(m, floorTile);

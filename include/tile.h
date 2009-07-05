@@ -4,12 +4,15 @@
 #include "geom.h"
 #include "flagset.h"
 
-//consider replacing opacity and reserved with a base Flagset using a specific, implicit schema.
-//also, should tiles have ID strings?
+Flagset tile_opacity_flagset_make();
+Flagset tile_opacity_flagset_set(Flagset fs, 
+  unsigned char xm, unsigned char xp, 
+  unsigned char ym, unsigned char yp, 
+  unsigned char zm, unsigned char zp
+);
+
 struct _tile {
-  #warning need to be able to handle glass floors as well as opaque floors.
-  unsigned opacity          :  2;
-  unsigned reserved         : 30;
+  Flagset opacity;
   void *context;
 };
 typedef struct _tile * Tile;
@@ -17,10 +20,17 @@ typedef struct _tile * Tile;
 Tile tile_new();
 Tile tile_init(
   Tile t, 
-  unsigned char opacity,
+  Flagset opacity,
   void *ctx
 );
 void tile_free(Tile t);
-int tile_opacity(Tile t);
+Flagset tile_opacity(Tile t);
+unsigned char tile_opacity_direction(Tile t, Direction direction);
+unsigned char tile_opacity_xm(Tile t);
+unsigned char tile_opacity_xp(Tile t);
+unsigned char tile_opacity_ym(Tile t);
+unsigned char tile_opacity_yp(Tile t);
+unsigned char tile_opacity_zm(Tile t);
+unsigned char tile_opacity_zp(Tile t);
 void *tile_context(Tile t);
 #endif
