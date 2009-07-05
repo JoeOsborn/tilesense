@@ -128,9 +128,9 @@ void object_note_object_moved(Object o, Object o2, mapVec delta) {
   mapVec newPos = object_position(o2);
   mapVec oldPos = (mapVec){newPos.x-delta.x, newPos.y-delta.y, newPos.z-delta.z};
   int oldIndex, newIndex;
-  unsigned short oldMapItem, newMapItem;
-  unsigned char newFlags, oldVis, newVis;
-  unsigned char *vistiles;
+  perception oldPerception, newPerception;
+  bool oldVis, newVis;
+  perception *vistiles;
   
   mapVec bpt, bsz;  
   Stimulus movestim;
@@ -138,16 +138,15 @@ void object_note_object_moved(Object o, Object o2, mapVec delta) {
   for(int i = 0; i < object_sensor_count(o); i++) {
     s = object_get_sensor(o,i);
     sensor_swept_bounds(s, &bpt, &bsz);
-    vistiles = sensor_get_visible_tiles(s);
+    vistiles = sensor_get_perceptmap(s);
     oldIndex = tile_index(oldPos.x, oldPos.y, oldPos.z, map_size(m), bpt, bsz);
     newIndex = tile_index(newPos.x, newPos.y, newPos.z, map_size(m), bpt, bsz);
-    oldMapItem = vistiles[oldIndex];
-    newMapItem = vistiles[newIndex];
-    oldVis = map_item_visible(oldMapItem);
-    newVis = map_item_visible(newMapItem);
+    oldPerception = vistiles[oldIndex];
+    newPerception = vistiles[newIndex];
+    oldVis = map_item_visible(oldPerception);
+    newVis = map_item_visible(newPerception);
     if(oldVis || newVis) {
-      newFlags = map_item_flags(newMapItem);
-      movestim = stimulus_init_obj_moved(stimulus_new(), o2, delta, newFlags, o2->context);
+      movestim = stimulus_init_obj_moved(stimulus_new(), o2, delta, newPerception, o2->context);
       sensor_push_stimulus(s, movestim);
     }
   }

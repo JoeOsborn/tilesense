@@ -3,22 +3,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAP_TILE_PART       0xFF00 //xxxxxxxx00000000
-#define MAP_FLAG_PART       0x00FF //00000000xxxxxxxx
-#define MAP_FLAG_LIT_PART   0x00F0 //00000000xxxx0000
-#define MAP_FLAG_VOL_PART   0x000C //000000000000xx00
-#define MAP_FLAG_LOS_PART   0x0003 //00000000000000xx
+//use chars for tile indices...
+//then have an int array for all the tile data.  
+//would use flagsets, but it's expensive to return a new flagset for stimulus purposes.
+//then again, if each stimulus stores a flagset, it's no issue -- we just do copies and sets.
+//still, the best approach may be to use a bitfield...
 
-#define MAP_IND(flgs) ((flgs & MAP_TILE_PART) >> 8)
-#define MAP_SET_IND(flgs, ind) (((ind << 8) | (flgs & (~MAP_TILE_PART))))
-#define MAP_FLAGS(flgs) (flgs & MAP_FLAG_PART)
-#define MAP_SET_FLAGS(flgs, nflgs) (nflgs | (flgs & (~MAP_FLAG_PART)))
-#define MAP_LIT(flgs) ((flgs & MAP_FLAG_LIT_PART) >> 4)
-#define MAP_SET_LIT(flgs, lit) (((lit << 4) | (flgs & (~MAP_FLAG_LIT_PART))))
-#define MAP_VOL(flgs) ((flgs & MAP_FLAG_VOL_PART) >> 2)
-#define MAP_SET_VOL(flgs, vol) (((vol << 2) | (flgs & (~MAP_FLAG_VOL_PART))))
-#define MAP_LOS(flgs) (flgs & MAP_FLAG_LOS_PART)
-#define MAP_SET_LOS(flgs, los) (((los) | (flgs & (~MAP_FLAG_LOS_PART))))
+
+//This way, the light tracer can check hitting the top, hitting the underside, and going through the surface.
+//Coming in from x or y can safely use just surface -- but the z stuff has to refer to 'underside' and 'top'.
+//If your bottom lets light out, hit the next top; if that top lets light in, go through to the surface; if that bottom lets light out, stop there; otherwise, keep going to the next top, and so on.  Similar in reverse, but switch out/in.
+//Do we need more opacity data on tiles for this to work?  Yes, we need entry and exit data for top and bottom, not just exit data.  This is important because light can't leave or enter the bottom of a regular floor, but light can enter the bottom of a one-way glass floor (though it can't leave it); light can't leave or enter a regular tight ceiling, but it can enter a one-way glass ceiling; and even if the ceiling lets light in, the floor might not let light out.
+//the extra opacity data is in, now we have to rewrite the light tracer.
 
 Map map_new() {
   #warning new should use calloc, init should free all ptrs just in case
@@ -36,21 +32,26 @@ Map map_init(
 ) {
   m->id = strdup(id);
   m->sz = sz;
-  m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(unsigned short));
-  memcpy(m->tilemap, tilemap, sz.x*sz.y*sz.z*sizeof(unsigned short));
+  m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(unsigned char));
+  memcpy(m->tilemap, tilemap, sz.x*sz.y*sz.z*sizeof(unsigned char));
+  m->perceptmap = calloc(sz.x*sz.y*sz.z, sizeof(perception));
   for(int i = 0; i < sz.x*sz.y*sz.z; i++) {
     #warning not really sure about this ambient light stuff, etc.
-    m->tilemap[i] = ((unsigned short)(tilemap[i]) << 8) + ((ambientLight << 4) & MAP_FLAG_LIT_PART);
+    m->tilemap[i] = tilemap[i];
+    m->perceptmap[i].underlit=ambientLight;
+    m->perceptmap[i].surflit=ambientLight;
+    m->perceptmap[i].toplit=ambientLight;
   }
   m->tileset = TCOD_list_new();
   map_add_tile(m, tile_init(tile_new(), 
     tile_opacity_flagset_set(tile_opacity_flagset_make(), 
       0,0,
       0,0,
+      0,0,
       0,0
     ), 
-    baseTileCtx)
-  );
+    baseTileCtx
+  ));
   m->ambientLight = ambientLight;
   m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();
@@ -60,6 +61,7 @@ Map map_init(
 void map_free(Map m) {
   free(m->id);
   free(m->tilemap);
+  free(m->perceptmap);
   for(int i = 0; i < TCOD_list_size(m->exits); i++) {
     exit_free(TCOD_list_get(m->exits, i));
   }
@@ -148,7 +150,7 @@ void map_turn_object(Map m, char *id, int amt) {
   }
 }
 
-void map_get_region(Map m, unsigned short *flags, mapVec start, mapVec end, mapVec bpt, mapVec bsz) {
+void map_get_region(Map m, perception *percept, mapVec start, mapVec end, mapVec bpt, mapVec bsz) {
   int index, destIndex;
   mapVec size = m->sz;
   for(int z = start.z; z <= end.z; z++) {
@@ -156,7 +158,7 @@ void map_get_region(Map m, unsigned short *flags, mapVec start, mapVec end, mapV
       for(int x = start.x; x <= end.x; x++) {
         index = map_tile_index(m, x, y, z);
         destIndex = tile_index(x, y, z, size, bpt, bsz);
-        flags[destIndex] = MAP_FLAGS(m->tilemap[index]);
+        percept[destIndex] = m->perceptmap[index];
       }
     }
   }
@@ -171,7 +173,7 @@ unsigned char map_tile_at(Map m, int x, int y, int z) {
 }
 
 unsigned char map_tile_at_index(Map m, int i) {
-  return MAP_IND(m->tilemap[i]);
+  return m->tilemap[i];
 }
 
 Tile map_get_tiledef(Map m, int i) {
@@ -179,16 +181,12 @@ Tile map_get_tiledef(Map m, int i) {
 }
 
 //returns the los of the previous tile (x,y,z) based on the blockage of the next tile in the path.
-unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz, int pX, int pY, int pZ) {
-  //this is fundamentally wrong -- in order for light to pass from A to B in dir X:
-  //[A->][B]
-  //B must _permit_ light from the opposite direction.
-  //[A][->B]
-  //This problem exhibits worst in the z dimension, which also conflates exit and intake.
+unsigned char map_trace_light(Map m, perception *percept, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz, int pX, int pY, int pZ) {
   
-  //REWRITE THIS JUNK!  provide higher-res los information, at least in the intermediate stages -- seeing the underside of a tile is different from seeing the top of the tile.
-  //also, seeing the top of a tile counts as a kind of los... this needs more resolution!
   
+  
+  //this could probably use a rewrite to properly populate surface/under/top.
+    
   //try to trace to position through tiles that allow light to pass
   int x, y, z;
   //if the next tile is the position...
@@ -199,10 +197,14 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
     z = bd->destz;
   }
   unsigned int index      = map_tile_index(m, x, y, z);
-  unsigned short mapItem  = m->tilemap[index];
-  unsigned char tileIndex = MAP_IND(mapItem);
+  unsigned char tileIndex = m->tilemap[index];
   Tile tileDef            = map_get_tiledef(m, tileIndex);
-  Direction direction     = direction_light_between(x,y,z,pX,pY,pZ);
+  #warning wrong, we need to do this in two steps for all z-transitions
+  //and use z blockage info from the new tile and the old tile.
+  Direction direction     = direction_light_between(x,y,z,pX,pY,pZ,z);
+  // if(z != pZ) {
+  //   
+  // }
   
   //light leaving out of the next tile towards the previous tile
   unsigned char blockage  = tile_opacity_direction(tileDef, direction);
@@ -224,8 +226,8 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   }
   
   unsigned int destIndex  = tile_index(x, y, z, map_size(m), bpos, bsz);
-  unsigned char flg       = flags[destIndex];
-  unsigned char los       = MAP_LOS(flg);  
+  perception flg          = percept[destIndex];
+  unsigned char los       = flg.surflos;
   
   //if the next tile is not in los...
   if(los == 0x01) {
@@ -251,8 +253,9 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   }
   //otherwise, we're tracing through a tile with unknown los.
   //trace to the next tile, which may have a known los.
-  unsigned char reclos = map_trace_light(m, flags, bd, bpos, bsz, x, y, z);
-  flags[destIndex] = MAP_SET_LOS(flags[destIndex], reclos); 
+  unsigned char reclos = map_trace_light(m, percept, bd, bpos, bsz, x, y, z);
+  percept[destIndex].toplos = reclos;
+  percept[destIndex].surflos = reclos;
   //if the next tile is not in los...
   if(reclos == 0x01) {
     //the previous tiles must all be not in los as well.
@@ -279,13 +282,14 @@ unsigned char map_trace_light(Map m, unsigned char *flags, TCOD_bresenham3_data_
   return 0x00;
 }
 //refactor to support an interface that includes a Light and updates the lit flags rather than the viz flags.
-void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos, mapVec bsz) {
+void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, mapVec bsz) {
   //int times = 0;
   mapVec position = volume_position(vol);
   mapVec size = m->sz, cur;
   unsigned int index, destIndex;
-  unsigned char litFlags, newFlags, los;
-  unsigned short mapItem;
+  perception newFlags;
+  unsigned char los, litFlags;
+  perception mapItem;
   
   int zstart = CLIP(bpos.z, 0, size.z);
   int zend = CLIP(bpos.z+bsz.z, 0, size.z);
@@ -300,30 +304,36 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
         index = map_tile_index(m, x, y, z);
         destIndex = tile_index(x, y, z, size, bpos, bsz);
 
-        mapItem   = m->tilemap[index];
-        litFlags  = MAP_LIT(mapItem);    
-        newFlags  = flags[destIndex];
-        newFlags  = MAP_SET_LIT(newFlags, litFlags);
+        mapItem   = m->perceptmap[index];
+        litFlags  = mapItem.surflit;
+        newFlags  = percept[destIndex];
+        newFlags.toplit = litFlags;
+        newFlags.surflit = litFlags;
                 
         cur = (mapVec){x, y, z};
         //vol is 0 0 if unsure, 1 1 if known vol, 1 0 if edge of vol, 0 1 if known out-of-vol.
-        if(MAP_VOL(newFlags) == 0x00) {
+        if(newFlags.surfvol == 0x00) { //not right anymore, three vol flags?
           //if it's within the volume
           if(volume_contains_point(vol, cur, 0.0)) {
-            newFlags = MAP_SET_VOL(newFlags, 0x03);
+            newFlags.topvol = 0x03;
+            newFlags.surfvol = 0x03;
+            newFlags.undervol = 0x03;
           } else {
-            newFlags = MAP_SET_VOL(newFlags, 0x01);
+            newFlags.topvol = 0x01;
+            newFlags.surfvol = 0x01;
+            newFlags.undervol = 0x01;
           }
-          flags[destIndex] = newFlags;
+          percept[destIndex] = newFlags;
         }
-        if(MAP_LOS(newFlags) == 0x00) {
+        if(newFlags.surflos == 0x00) { //not right anymore, three vol flags?
           TCOD_bresenham3_data_t bd;
           TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
           //this is a recursive fn that is also destructive to flags.  keep that in mind!
           //trace from this tile to the sensor
-          los = map_trace_light(m, flags, &bd, bpos, bsz, x, y, z);
-          newFlags = MAP_SET_LOS(newFlags, los);
-          flags[destIndex] = newFlags;
+          los = map_trace_light(m, percept, &bd, bpos, bsz, x, y, z);
+          newFlags.toplos = los;
+          newFlags.surflos = los;
+          percept[destIndex] = newFlags;
         }
       }
     }
@@ -331,8 +341,8 @@ void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos,
   //what about the exits?
 }
 
-void map_get_visible_objects(Map m, TCOD_list_t objs, unsigned char *visflags, mapVec bpt, mapVec bsz) {
-  unsigned char flags;
+void map_get_visible_objects(Map m, TCOD_list_t objs, perception *visflags, mapVec bpt, mapVec bsz) {
+  perception flags;
   int index;
   mapVec pt;
   Object o;
@@ -351,23 +361,19 @@ mapVec map_size(Map m) {
   return m->sz;
 }
 
-unsigned char map_item_index(unsigned short mapItem) {
-  return MAP_IND(mapItem);
+//convenience methods --all mean "top or surface", do not include underside
+bool map_item_lit(perception pcpt) {
+  return pcpt.toplit || pcpt.surflit;
 }
-unsigned char map_item_flags(unsigned short mapItem) {
-  return MAP_FLAGS(mapItem);
+bool map_item_in_volume(perception pcpt) {
+  return pcpt.topvol || pcpt.surfvol;
 }
-int map_item_lit(unsigned short flags) {
-  return MAP_LIT(flags) > 1;
+bool map_item_los(perception pcpt) {
+  return pcpt.toplos || pcpt.surflos;
 }
-int map_item_in_volume(unsigned short flags) {
-  return MAP_VOL(flags) > 1;
-}
-int map_item_los(unsigned short flags) {
-  return MAP_LOS(flags) > 1;
-}
-int map_item_visible(unsigned short flags) {
-  return (MAP_LIT(flags) > 1) && (MAP_VOL(flags) > 1) && (MAP_LOS(flags) > 1);
+//lit and in volume and in los
+bool map_item_visible(perception pcpt) {
+  return map_item_lit(pcpt) && map_item_in_volume(pcpt) && map_item_los(pcpt);
 }
 
 //this is the interface for lighting up a room and changing its lighting properties.  there may also be an API for going through all lights and relighting from scratch.

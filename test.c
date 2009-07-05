@@ -96,42 +96,42 @@ Map createmap() {
   ); 
   Tile floorTile = tile_init(
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 15, 0, 0),
     NULL
   );
   Tile wallTile = tile_init(
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 15, 15, 15, 15, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 15, 15, 15, 15, 15, 15, 15),
     NULL
   );
   Tile leftTile = tile_init( //light can come from x+ to x-
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 15, 0, 0, 15, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 15, 0, 0, 15, 15, 15, 15),
     NULL
   );
   Tile rightTile = tile_init( //light can come from x- to x+
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 0, 0, 0, 15, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 0, 0, 0, 15, 15, 15, 15),
     NULL
   );
   Tile upTile = tile_init( //light can come from y+ to y-
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 15, 15, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 15, 15, 15, 15, 15),
     NULL
   );
   Tile downTile = tile_init( //light can come from y- to y+
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 15, 0, 15, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 15, 0, 15, 15, 15, 15),
     NULL
   );
-  Tile passZPlus = tile_init( //light can come from z- to z+ (Weird!)
+  Tile glassFloor = tile_init( //light can come from z- to z+
     tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 0),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 15, 0, 0),
     NULL
   );
-  Tile passZMinus = tile_init( //light can come from z+ to z-, but nott he other way (weird!)
+  Tile glassCeiling = tile_init( //light can come from z+ to z-
     tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 0, 0, 15),
     NULL
   );
   map_add_tile(m, floorTile);
@@ -140,8 +140,8 @@ Map createmap() {
   map_add_tile(m, rightTile);
   map_add_tile(m, upTile);
   map_add_tile(m, downTile);
-  map_add_tile(m, passZPlus);
-  map_add_tile(m, passZMinus);
+  map_add_tile(m, glassFloor);
+  map_add_tile(m, glassCeiling);
   
   map_add_object(m, object_init(object_new(), "a", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
   map_add_object(m, object_init(object_new(), "b", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
@@ -151,10 +151,10 @@ Map createmap() {
   return m;
 }
 
-void drawtiles(Map m, unsigned char *buf, Sensor s, mapVec pos, mapVec size) {
+void drawtiles(Map m, perception *buf, Sensor s, mapVec pos, mapVec size) {
   int index=0;
   unsigned char tileIndex;
-  unsigned char flags;
+  perception flags;
   int drawX, drawY;
   Volume vol = sensor_volume(s);
   mapVec borig, bsz;
@@ -180,41 +180,41 @@ void drawtiles(Map m, unsigned char *buf, Sensor s, mapVec pos, mapVec size) {
            //visible and lit and in volume
            TCOD_console_print_left(NULL, drawX, drawY, "%i", tileIndex);
         }
-        // else if(!map_item_lit(flags) && map_item_in_volume(flags) && map_item_los(flags)) {
-        //   //not lit and viewable
-        //   TCOD_console_print_left(NULL, drawX, drawY, "_");
-        // }
-        // else if(!map_item_lit(flags) && map_item_in_volume(flags) && !map_item_los(flags)) {
-        //   //not lit and not los
-        //   TCOD_console_print_left(NULL, drawX, drawY, ",");
-        // }
-        // else if(!map_item_lit(flags) && !map_item_in_volume(flags) && map_item_los(flags)) {
-        //   //not lit and not in vol
-        //   TCOD_console_print_left(NULL, drawX, drawY, "d");
-        // }
-        // else if(map_item_lit(flags) && !map_item_in_volume(flags) && map_item_los(flags)) {
-        //   //lit and in los, but not in vol
-        //   TCOD_console_print_left(NULL, drawX, drawY, "a");
-        // }
-        // else if(map_item_lit(flags) && map_item_in_volume(flags) && !map_item_los(flags)) {
-        //   //lit and in vol, but not in los
-        //   TCOD_console_print_left(NULL, drawX, drawY, "b");
-        // }
-        // else if(map_item_lit(flags) && !map_item_in_volume(flags) && !map_item_los(flags)) {
-        //   //lit and not in vol or los (or los wasn't checked)
-        //   TCOD_console_print_left(NULL, drawX, drawY, ".");
-        // }
-        // else if(!map_item_lit(flags) && !map_item_in_volume(flags) && !map_item_los(flags)) { 
-        //   //not lit, in vol, or in los
-        //   TCOD_console_print_left(NULL, drawX, drawY, "x");
-        // }
+        else if(!map_item_lit(flags) && map_item_in_volume(flags) && map_item_los(flags)) {
+          //not lit and viewable
+          TCOD_console_print_left(NULL, drawX, drawY, "_");
+        }
+        else if(!map_item_lit(flags) && map_item_in_volume(flags) && !map_item_los(flags)) {
+          //not lit and not los
+          TCOD_console_print_left(NULL, drawX, drawY, ",");
+        }
+        else if(!map_item_lit(flags) && !map_item_in_volume(flags) && map_item_los(flags)) {
+          //not lit and not in vol
+          TCOD_console_print_left(NULL, drawX, drawY, "d");
+        }
+        else if(map_item_lit(flags) && !map_item_in_volume(flags) && map_item_los(flags)) {
+          //lit and in los, but not in vol
+          TCOD_console_print_left(NULL, drawX, drawY, "a");
+        }
+        else if(map_item_lit(flags) && map_item_in_volume(flags) && !map_item_los(flags)) {
+          //lit and in vol, but not in los
+          TCOD_console_print_left(NULL, drawX, drawY, "b");
+        }
+        else if(map_item_lit(flags) && !map_item_in_volume(flags) && !map_item_los(flags)) {
+          //lit and not in vol or los (or los wasn't checked)
+          TCOD_console_print_left(NULL, drawX, drawY, ".");
+        }
+        else if(!map_item_lit(flags) && !map_item_in_volume(flags) && !map_item_los(flags)) { 
+          //not lit, in vol, or in los
+          TCOD_console_print_left(NULL, drawX, drawY, "x");
+        }
       }
     }
   }
 }
 
 void draw_object(Stimulus st) {
-  unsigned char visflags = stimulus_obj_sight_change_get_new_flags(st);
+  perception visflags = stimulus_obj_sight_change_get_new_perception(st);
   mapVec pos = stimulus_obj_sight_change_get_position(st);
   char *id = stimulus_obj_sight_change_get_id(st);
   if(!map_item_visible(visflags)) {
@@ -226,9 +226,9 @@ void draw_object(Stimulus st) {
 
 void drawstimuli(Map m, Sensor s) {
   TCOD_list_t stims = sensor_consume_stimuli(s);
-  unsigned char *tiles;
+  perception *tiles;
   mapVec pos, size, oldPt, delta;
-  unsigned char visflags;
+  perception visflags;
   if(TCOD_list_size(stims) > 0) {
     TCOD_console_print_left(NULL, 0, 10, "                            ");
   }
@@ -241,7 +241,7 @@ void drawstimuli(Map m, Sensor s) {
       case StimTileLitChange:
       case StimTileVisChange:
         //redraw all tiles
-        tiles = stimulus_tile_sight_change_get_new_tiles(st);
+        tiles = stimulus_tile_sight_change_get_new_perceptmap(st);
         pos = stimulus_tile_sight_change_get_position(st);
         size = stimulus_tile_sight_change_get_size(st);
         drawtiles(m, tiles, s, pos, size);
@@ -252,7 +252,7 @@ void drawstimuli(Map m, Sensor s) {
         draw_object(st);
         break;
       case StimObjMoved:
-        visflags = stimulus_obj_sight_change_get_new_flags(st);
+        visflags = stimulus_obj_sight_change_get_new_perception(st);
         pos = stimulus_obj_sight_change_get_position(st);
         delta = stimulus_obj_moved_get_dir(st);
         oldPt = mapvec_subtract(pos, delta);

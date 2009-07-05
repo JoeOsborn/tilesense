@@ -3,25 +3,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-Direction direction_light_between(float pX, float pY, float pZ, float x, float y, float z) {
+Direction direction_between(int pX, int pY, int pZ, int x, int y, int z, int surfaceZ) {
   Direction direction = DirNone;
-  if(x > pX) { //moving right, so "light comes from the left"
-    direction |= DirXMinus;
-  }
-  if(x < pX) { //see above
+  if(x > pX) { 
     direction |= DirXPlus;
   }
-  if(y > pY) { //moving foreward, so "light comes from the back" (in y)
-    direction |= DirYMinus;
+  if(x < pX) { 
+    direction |= DirXMinus;
   }
-  if(y < pY) {
+  if(y > pY) { 
     direction |= DirYPlus;
   }
-  if(z > pZ) {
-    direction |= DirZMinus;
+  if(y < pY) { 
+    direction |= DirYMinus;
   }
-  if(z < pZ) {
-    direction |= DirZPlus;
+  if(pZ > surfaceZ && z == surfaceZ) { //z+ -> z
+    direction |= DirZMinusIn;
+  }
+  if(pZ == surfaceZ && z < pZ) { //z -> z-
+    direction |= DirZMinusOut; 
+  }
+  if(pZ < surfaceZ && z == pZ) { //z- -> z
+    direction |= DirZPlusIn;
+  }
+  if(pZ == surfaceZ && z > pZ) { //z -> z+
+    direction |= DirZPlusOut; 
   }
   return direction;
 }
@@ -164,3 +170,8 @@ Plane plane_normalize(Plane p) {
   return r;
 }
 
+perception percept_none = {
+  0,0,0,
+  0,0,0,
+  0,0,0
+};

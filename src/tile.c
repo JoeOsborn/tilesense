@@ -6,17 +6,20 @@
 #define TILE_OPACITY_XP_OFF  4
 #define TILE_OPACITY_YM_OFF  8
 #define TILE_OPACITY_YP_OFF 12
-#define TILE_OPACITY_ZM_OFF 16
-#define TILE_OPACITY_ZP_OFF 20
+#define TILE_OPACITY_FIN_OFF 16
+#define TILE_OPACITY_FOUT_OFF 20
+#define TILE_OPACITY_CIN_OFF 24
+#define TILE_OPACITY_COUT_OFF 28
 
 
 Flagset tile_opacity_flagset_make() {
-  return flagset_init_raw(flagset_new_raw(TILE_OPACITY_PART_SZ*6), TILE_OPACITY_PART_SZ*6);
+  return flagset_init_raw(flagset_new_raw(TILE_OPACITY_PART_SZ*8), TILE_OPACITY_PART_SZ*8);
 }
 Flagset tile_opacity_flagset_set(Flagset opacity, 
   unsigned char xm, unsigned char xp, 
   unsigned char ym, unsigned char yp, 
-  unsigned char zm, unsigned char zp
+  unsigned char fin, unsigned char fout,
+  unsigned char cin, unsigned char cout
 ) {
   if(xm <= 15) {
     flagset_set_raw(opacity, TILE_OPACITY_XM_OFF, TILE_OPACITY_PART_SZ, xm);    
@@ -30,11 +33,17 @@ Flagset tile_opacity_flagset_set(Flagset opacity,
   if(yp <= 15) {
     flagset_set_raw(opacity, TILE_OPACITY_YP_OFF, TILE_OPACITY_PART_SZ, yp);    
   }
-  if(zm <= 15) {
-    flagset_set_raw(opacity, TILE_OPACITY_ZM_OFF, TILE_OPACITY_PART_SZ, zm);    
+  if(fin <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_FIN_OFF, TILE_OPACITY_PART_SZ, fin);    
   }
-  if(zp <= 15) {
-    flagset_set_raw(opacity, TILE_OPACITY_ZP_OFF, TILE_OPACITY_PART_SZ, zp);    
+  if(fout <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_FOUT_OFF, TILE_OPACITY_PART_SZ, fout);    
+  }
+  if(cin <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_CIN_OFF, TILE_OPACITY_PART_SZ, cin);    
+  }
+  if(cout <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_COUT_OFF, TILE_OPACITY_PART_SZ, cout);    
   }
   return opacity;
 }
@@ -75,12 +84,23 @@ unsigned char tile_opacity_direction(Tile t, Direction direction) {
   if(direction & DirYPlus) {
     blockage = MAX(blockage, tile_opacity_yp(t));
   }
-  //unless it's moving in z, in which case we use z, not x/y
-  if(direction & DirZMinus) {
-    blockage = tile_opacity_zm(t);
+  unsigned int zBlock = 0;
+  //Z overrides regular blockages if present.  is this correct this way?
+  if(direction & DirZMinusIn) { //entering from the ceiling
+    zBlock = tile_opacity_cin(t);
+    blockage = zBlock ? zBlock : blockage;
   }
-  if(direction & DirZPlus) {
-    blockage = tile_opacity_zp(t);
+  if(direction & DirZMinusOut) { //exiting from the floor
+    zBlock = tile_opacity_fout(t);
+    blockage = zBlock ? zBlock : blockage;
+  }
+  if(direction & DirZPlusIn) { //entering from the floor
+    zBlock = tile_opacity_fin(t);
+    blockage = zBlock ? zBlock : blockage;
+  }
+  if(direction & DirZPlusOut) { //exiting from the ceiling
+    zBlock = tile_opacity_cout(t);
+    blockage = zBlock ? zBlock : blockage;
   }
   return (unsigned char)blockage;
 }
@@ -97,11 +117,17 @@ unsigned char tile_opacity_ym(Tile t) {
 unsigned char tile_opacity_yp(Tile t) {
   return flagset_get_raw(t->opacity, TILE_OPACITY_YP_OFF, TILE_OPACITY_PART_SZ);
 }
-unsigned char tile_opacity_zm(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_ZM_OFF, TILE_OPACITY_PART_SZ);
+unsigned char tile_opacity_fin(Tile t) {
+  return flagset_get_raw(t->opacity, TILE_OPACITY_FIN_OFF, TILE_OPACITY_PART_SZ);
 }
-unsigned char tile_opacity_zp(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_ZP_OFF, TILE_OPACITY_PART_SZ);
+unsigned char tile_opacity_fout(Tile t) {
+  return flagset_get_raw(t->opacity, TILE_OPACITY_FOUT_OFF, TILE_OPACITY_PART_SZ);
+}
+unsigned char tile_opacity_cin(Tile t) {
+  return flagset_get_raw(t->opacity, TILE_OPACITY_CIN_OFF, TILE_OPACITY_PART_SZ);
+}
+unsigned char tile_opacity_cout(Tile t) {
+  return flagset_get_raw(t->opacity, TILE_OPACITY_COUT_OFF, TILE_OPACITY_PART_SZ);
 }
 void *tile_context(Tile t) {
   return t->context;

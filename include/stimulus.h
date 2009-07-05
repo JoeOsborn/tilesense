@@ -21,7 +21,7 @@ struct _stimulus {
       void *context;
       } generic;
     struct _stim_tile_sight_change { //tilelit, tilevis
-      unsigned char *newTiles;
+      perception *newMap;
       mapVec position;
       mapVec size;
       } tile_sight_change;
@@ -29,14 +29,14 @@ struct _stimulus {
       mapVec position;
       mapVec facing;
       char *id;
-      unsigned char newFlags; 
+      perception newPercept; 
       void *context;
       } obj_sight_change; 
     struct _stim_tile_obj_moved { //objmoved
       mapVec position;
       mapVec facing;
       char *id;
-      unsigned char newFlags;
+      perception newPercept; 
       void *context;
       mapVec dir;
       } obj_moved; 
@@ -53,17 +53,17 @@ typedef struct _stimulus * Stimulus;
 Stimulus stimulus_new();
 Stimulus stimulus_init(Stimulus s);
 Stimulus stimulus_init_generic(Stimulus s, void *context);
-Stimulus stimulus_init_tile_vis_change(Stimulus s, unsigned char *newTiles, mapVec position, mapVec size);
-Stimulus stimulus_init_tile_lit_change(Stimulus s, unsigned char *newTiles, mapVec position, mapVec size);
-Stimulus stimulus_init_obj_vis_change(Stimulus s, Object obj, unsigned char newFlags, void *context);
-Stimulus stimulus_init_obj_lit_change(Stimulus s, Object obj, unsigned char newFlags, void *context);
-Stimulus stimulus_init_obj_moved(Stimulus s, Object obj, mapVec dir, unsigned char newFlags, void *context);
+Stimulus stimulus_init_tile_vis_change(Stimulus s, perception *newMap, mapVec position, mapVec size);
+Stimulus stimulus_init_tile_lit_change(Stimulus s, perception *newMap, mapVec position, mapVec size);
+Stimulus stimulus_init_obj_vis_change(Stimulus s, Object obj, perception newFlags, void *context);
+Stimulus stimulus_init_obj_lit_change(Stimulus s, Object obj, perception newFlags, void *context);
+Stimulus stimulus_init_obj_moved(Stimulus s, Object obj, mapVec dir, perception newFlags, void *context);
 void stimulus_free(Stimulus s);
 
 stimtype stimulus_type(Stimulus s);
 struct timeval stimulus_time(Stimulus s);
 
-unsigned char *stimulus_tile_sight_change_get_new_tiles(Stimulus s);
+perception *stimulus_tile_sight_change_get_new_perceptmap(Stimulus s);
 mapVec stimulus_tile_sight_change_get_position(Stimulus s);
 mapVec stimulus_tile_sight_change_get_size(Stimulus s);
 
@@ -71,7 +71,7 @@ void * stimulus_obj_sight_change_get_context(Stimulus s);
 mapVec stimulus_obj_sight_change_get_position(Stimulus s);
 mapVec stimulus_obj_sight_change_get_facing(Stimulus s);
 char * stimulus_obj_sight_change_get_id(Stimulus s);
-unsigned char stimulus_obj_sight_change_get_new_flags(Stimulus s);
+perception stimulus_obj_sight_change_get_new_perception(Stimulus s);
 
 mapVec stimulus_obj_moved_get_dir(Stimulus s);
 void * stimulus_obj_moved_get_context(Stimulus s);

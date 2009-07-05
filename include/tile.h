@@ -8,7 +8,8 @@ Flagset tile_opacity_flagset_make();
 Flagset tile_opacity_flagset_set(Flagset fs, 
   unsigned char xm, unsigned char xp,  //light leaving to the left, light leaving to the right
   unsigned char ym, unsigned char yp,  //etc...
-  unsigned char zm, unsigned char zp
+  unsigned char floorIn, unsigned char floorOut,
+  unsigned char ceilIn, unsigned char ceilOut
 );
 
 struct _tile {
@@ -30,7 +31,9 @@ unsigned char tile_opacity_xm(Tile t);
 unsigned char tile_opacity_xp(Tile t);
 unsigned char tile_opacity_ym(Tile t);
 unsigned char tile_opacity_yp(Tile t);
-unsigned char tile_opacity_zm(Tile t);
-unsigned char tile_opacity_zp(Tile t);
+unsigned char tile_opacity_fin(Tile t);
+unsigned char tile_opacity_fout(Tile t);
+unsigned char tile_opacity_cin(Tile t);
+unsigned char tile_opacity_cout(Tile t);
 void *tile_context(Tile t);
 #endif

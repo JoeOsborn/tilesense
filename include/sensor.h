@@ -11,8 +11,8 @@ struct _sensor {
   char *id;
   Volume volume;  
 
-  unsigned char *vistiles;
-  unsigned char *oldVistiles;
+  perception *vistiles;
+  perception *oldVistiles;
   
   mapVec borig, bsz;
 
@@ -51,7 +51,7 @@ void sensor_sense(Sensor s);
 TCOD_list_t sensor_consume_stimuli(Sensor s); //the user _must_ free the returned list
 void sensor_push_stimulus(Sensor s, Stimulus stim); //this dispatches and updates the vistiles/visobjects/whatever
 
-unsigned char *sensor_get_visible_tiles(Sensor s);
+perception *sensor_get_perceptmap(Sensor s);
 TCOD_list_t sensor_get_visible_objects(Sensor s);
 
 void sensor_swept_bounds(Sensor s, mapVec *borig, mapVec *bsz);

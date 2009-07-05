@@ -14,12 +14,16 @@ typedef enum {
   DirYMinus =  4,
   DirYPlus  =  8,
   DirY      = 12,
-  DirZMinus = 16,
-  DirZPlus  = 32,
-  DirZ      = 48
+  DirZMinusIn  = 16,
+  DirZMinusOut = 32,
+  DirZMinus    = 48,
+  DirZPlusIn   = 64,
+  DirZPlusOut  = 128,
+  DirZPlus     = 192,
+  DirZ         = 240
 } Direction;
 
-Direction direction_light_between(float pX, float pY, float pZ, float x, float y, float z);
+Direction direction_light_between(int pX, int pY, int pZ, int x, int y, int z, int surfaceZ);
 
 typedef enum {
   NegativeHalfSpace=-1,
@@ -57,5 +61,23 @@ Plane plane_make_points(mapVec p1, mapVec p2, mapVec p3);
 Plane plane_normalize(Plane p);
 float plane_distance_to_point(Plane p, mapVec pt);
 halfSpace plane_classify_point(Plane plane, mapVec pt, float radius);
+
+//does this belong here?
+typedef struct _perception {
+  unsigned underlit     : 4;
+  unsigned surflit      : 4;
+  unsigned toplit       : 4; //12bit
+  
+  unsigned underlos     : 2;
+  unsigned surflos      : 2;
+  unsigned toplos       : 2; //6bit
+  
+  unsigned undervol     : 2;
+  unsigned surfvol      : 2;
+  unsigned topvol       : 2; //6bit
+  //24bit
+} perception;
+
+extern perception percept_none;
 
 #endif

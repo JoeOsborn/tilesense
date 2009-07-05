@@ -52,7 +52,7 @@ TCOD_DIR=libtcod
 TCOD_FLAGS=-I $(TCOD_DIR)/include -I $(TCOD_DIR)/include/gui
 TCOD_LIBS=$(TCOD_DIR)/libtcod.a
 
-CFLAGS=$(FLAGS) -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
+CFLAGS=$(FLAGS) -std=gnu9x -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
 
 $(C_OBJS) : $(HEADERS)
 

@@ -11,7 +11,8 @@
 struct _map {
   char *id;
   mapVec sz;
-  unsigned short *tilemap;
+  unsigned char *tilemap;
+  perception *perceptmap;
   TCOD_list_t tileset;
   char ambientLight;
   TCOD_list_t exits;
@@ -36,7 +37,7 @@ void map_free(Map m);
 mapVec map_size(Map m);
 void map_add_exit(Map m, Exit ex);
 void map_remove_exit(Map m, Exit ex);
-void map_get_region(Map m, unsigned short *buf, mapVec start, mapVec end, mapVec bpos, mapVec bsz);
+void map_get_region(Map m, perception *buf, mapVec start, mapVec end, mapVec bpos, mapVec bsz);
 void map_add_tile(Map m, Tile t);
 
 void *map_context(Map m);
@@ -63,15 +64,15 @@ void map_turn_object(Map m, char *id, int amt);
   //vol and los are 0 0 if unsure, 1 1 if known viz, 1 0 if edge of viz, 0 1 if known inviz.
   //the vol/los flags on the tilemap itself will be ignored, though the lighting flags will be used.
 //buf should be no smaller than the given bounds.  buf will contain the flags, map should be queried for tile_id
-void map_get_visible_tiles(Map m, unsigned char *flags, Volume vol, mapVec bpos, mapVec bsz);
-void map_get_visible_objects(Map m, TCOD_list_t objs, unsigned char *visflags, mapVec bpt, mapVec bsz);
+void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, mapVec bsz);
+void map_get_visible_objects(Map m, TCOD_list_t objs, perception *percept, mapVec bpt, mapVec bsz);
 
-unsigned char map_item_index(unsigned short flags);
-unsigned char map_item_flags(unsigned short mapItem);
-int map_item_lit(unsigned short flags);
-int map_item_in_volume(unsigned short flags);
-int map_item_los(unsigned short flags);
-int map_item_visible(unsigned short mapItem);
+//convenience methods --all mean "top or surface", do not include underside
+bool map_item_lit(perception pcpt);
+bool map_item_in_volume(perception pcpt);
+bool map_item_los(perception pcpt);
+//lit and in volume and in los
+bool map_item_visible(perception pcpt);
 
 //is this API ok?  won't there be a fair bit of redundant work for objects with multiple lights?
 void map_note_light_added(Map m, unsigned char attenuation, int intensity, Volume vol);

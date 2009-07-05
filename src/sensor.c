@@ -10,8 +10,8 @@ Sensor sensor_init(Sensor s, char *id, Volume volume, void *context) {
   s->volume = volume;
   volume_swept_bounds(s->volume, &(s->borig), &(s->bsz));
   
-  s->vistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(unsigned char));
-  s->oldVistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(unsigned char));
+  s->vistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(perception));
+  s->oldVistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(perception));
       
   s->visObjects = TCOD_list_new();
   s->oldVisObjects = TCOD_list_new();
@@ -72,12 +72,12 @@ void sensor_turn(Sensor s, int amt) {
 
 void sensor_sense(Sensor s) {
   Map m = s->map;
-  unsigned char *temp = s->vistiles;
+  perception *temp = s->vistiles;
   s->vistiles = s->oldVistiles; // tiles from two senses 
   s->oldVistiles = temp;
   
   mapVec pos=s->borig, sz=s->bsz;
-  memset(s->vistiles, 0, sz.x*sz.y*sz.z*sizeof(unsigned char));
+  memset(s->vistiles, 0, sz.x*sz.y*sz.z*sizeof(perception));
   map_get_visible_tiles(m, s->vistiles, s->volume, pos, sz);
   Stimulus vistiles = stimulus_init_tile_vis_change(stimulus_new(), s->vistiles, pos, sz);
   // TCOD_console_print_left(NULL, 0, 20, "p {%f, %f, %f}, s {%f, %f, %f}", pos.x, pos.y, pos.z, sz.x, sz.y, sz.z);
@@ -98,7 +98,8 @@ void sensor_sense(Sensor s) {
   for(int i = 0; i < TCOD_list_size(s->oldVisObjects); i++) {
     o = TCOD_list_get(s->oldVisObjects, i);
     if(!TCOD_list_contains(s->visObjects, o)) { //not visible anymore
-      visobj = stimulus_init_obj_vis_change(stimulus_new(), o, 0x00, object_context(o));
+      //this isn't quite right, really, using percept_none here
+      visobj = stimulus_init_obj_vis_change(stimulus_new(), o, percept_none, object_context(o));
       TCOD_list_push(s->stimuli, visobj);
     }
   }
@@ -147,17 +148,17 @@ void sensor_visobjs_remove(TCOD_list_t l, Object o) {
 }
 void sensor_push_stimulus(Sensor s, Stimulus stim) {
   mapVec pt, sz;
-  unsigned char *newVis;
-  unsigned char *snewVis = s->vistiles, *soldVis=s->oldVistiles;
-  unsigned char newFlags;
-  unsigned char litAndVisible;
+  perception *newVis;
+  perception *snewVis = s->vistiles, *soldVis=s->oldVistiles;
+  perception newPerception;
+  bool litAndVisible;
   Object o;
   Map m = s->map;
   mapVec borig=s->borig, bsz=s->bsz;
   switch(stimulus_type(stim)) {
     case StimTileLitChange:
     case StimTileVisChange:
-      newVis = stimulus_tile_sight_change_get_new_tiles(stim);
+      newVis = stimulus_tile_sight_change_get_new_perceptmap(stim);
       pt = stimulus_tile_sight_change_get_position(stim);
       sz = stimulus_tile_sight_change_get_size(stim);
       for(int z = pt.z; z < pt.z+sz.z; z++) {
@@ -182,8 +183,8 @@ void sensor_push_stimulus(Sensor s, Stimulus stim) {
       } else {
         sensor_visobjs_remove(s->oldVisObjects, o);
       }
-      newFlags = stimulus_obj_sight_change_get_new_flags(stim);
-      litAndVisible = map_item_visible(newFlags);
+      newPerception = stimulus_obj_sight_change_get_new_perception(stim);
+      litAndVisible = map_item_visible(newPerception);
       
       if(litAndVisible) {
         if(!sensor_visobjs_contains(s->visObjects, o)) {
@@ -202,7 +203,7 @@ void sensor_push_stimulus(Sensor s, Stimulus stim) {
   TCOD_list_push(s->stimuli, stim);
 }
 
-unsigned char *sensor_get_visible_tiles(Sensor s) {
+perception *sensor_get_perceptmap(Sensor s) {
   return s->vistiles;
 }
 
