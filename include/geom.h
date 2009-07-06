@@ -23,7 +23,7 @@ typedef enum {
   DirZ         = 240
 } Direction;
 
-Direction direction_light_between(int pX, int pY, int pZ, int x, int y, int z, int surfaceZ);
+Direction direction_between(int pX, int pY, int pZ, int x, int y, int z, int surfaceZ);
 
 typedef enum {
   NegativeHalfSpace=-1,

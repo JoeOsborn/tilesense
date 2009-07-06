@@ -164,7 +164,7 @@ void map_get_region(Map m, perception *percept, mapVec start, mapVec end, mapVec
   }
 }
 
-int map_tile_index(Map m, int x, int y, int z) {
+unsigned int map_tile_index(Map m, int x, int y, int z) {
   return tile_index(x, y, z, m->sz, mapvec_zero, m->sz);
 }
 
@@ -180,106 +180,164 @@ Tile map_get_tiledef(Map m, int i) {
   return TCOD_list_get(m->tileset, i);
 }
 
-//returns the los of the previous tile (x,y,z) based on the blockage of the next tile in the path.
-unsigned char map_trace_light(Map m, perception *percept, TCOD_bresenham3_data_t *bd, mapVec bpos, mapVec bsz, int pX, int pY, int pZ) {
+// typedef enum {
+//   MapTraceNone=0,
+//   MapTraceLOS=1,
+//   MapTraceLight=2,
+//   MapTraceBoth=3
+// } MapTraceMode;
+
+perception map_trace(Map m, 
+  perception *percept, 
+  TCOD_bresenham3_data_t *bd, 
+  mapVec bpos, mapVec bsz, 
+  int pX, int pY, int pZ) 
+{ 
+  //doesn't work yet, got to figure out why.  build a test room that's smaller and get it working!
   
-  
-  
-  //this could probably use a rewrite to properly populate surface/under/top.
-    
-  //try to trace to position through tiles that allow light to pass
-  int x, y, z;
-  //if the next tile is the position...
-  bool done = TCOD_line3_step_mt(&x, &y, &z, bd);
+  int x,y,z;
+  bool done = TCOD_line3_step_mt(&x, &y, &z, bd) || ((x == bd->destx) && (y== bd->desty) && (z==bd->destz));
   if(done) {
     x = bd->destx;
     y = bd->desty;
     z = bd->destz;
   }
-  unsigned int index      = map_tile_index(m, x, y, z);
-  unsigned char tileIndex = m->tilemap[index];
-  Tile tileDef            = map_get_tiledef(m, tileIndex);
-  #warning wrong, we need to do this in two steps for all z-transitions
-  //and use z blockage info from the new tile and the old tile.
-  Direction direction     = direction_light_between(x,y,z,pX,pY,pZ,z);
-  // if(z != pZ) {
-  //   
-  // }
+  //the "out" tile is the returned tile.
+  //the "in" tile is the current tile specified by x,y,z.
+  Direction outDir = direction_between(pX,pY,pZ,x,y,z,pZ);
   
-  //light leaving out of the next tile towards the previous tile
-  unsigned char blockage  = tile_opacity_direction(tileDef, direction);
+  unsigned int outIdx = tile_index(pX,pY,pZ,map_size(m),bpos,bsz);
+  unsigned int inIdx  = tile_index( x, y, z,map_size(m),bpos,bsz);
+  
+  Tile outTile = map_get_tile(m, m->tilemap[map_tile_index(m, pX, pY, pZ)]);
+  Tile inTile  = map_get_tile(m, m->tilemap[map_tile_index(m, x, y, z)]);
+  
+  perception outp = percept[outIdx];
+  perception inp  = percept[inIdx];
 
-  if(done) {
-    //the previous tile is in los if the next tile does not block it.
-    if(blockage >= 10) { //refactor this stuff! this is really not quite right -- should use amount of light transfer.
-      //the previous tile is not in los.
-      return 0x01;
-    //and the next tile is partially in los...
-    } else if(blockage >= 0x05 && blockage < 0x10) {
-      //the previous tile is partially in los (later, use subtraction instead of a direct set, use higher-bitdepth los (see comment on previous if))
-      return 0x02;
-    //and the next tile does not block los...
+  //is inp unknown?
+  if(inp.surflos==0x00) {
+    //yes: is in == dest?
+    if(done) {
+      //yes: in.surflos = 0x03
+      //destination is always in surface los.
+      inp.surflos=0x03;
+      //update the index.
+      percept[inIdx] = inp;
     } else {
-      //the previous tile is certainly in los
-      return 0x03;
+      //no: in = recurse (map will be updated during recursion)
+      inp = map_trace(m, percept, bd, bpos, bsz, x, y, z);
     }
+  }
+  unsigned char inBlock;
+  if(inp.toplos==0x00) {
+    //does the ceiling accept light?
+    inBlock = tile_opacity_direction(inTile, DirZMinusIn);
+    if((inp.surflos == 0x01) || inBlock > 10) {
+      inp.toplos = 0x01;
+    } else if(inBlock < 5) {
+      inp.toplos = MAX(inp.toplos, inp.surflos);
+    } else if(inBlock < 10) {
+      inp.toplos = MAX(inp.surflos, 0x02);
+    }
+  }
+  if(inp.underlos==0x00) {
+    //does the floor accept light?
+    inBlock = tile_opacity_direction(inTile, DirZPlusIn);
+    if((inp.surflos == 0x01) || inBlock > 10) {
+      inp.underlos = 0x01;
+    } else if(inBlock < 5) {
+      inp.underlos = MAX(inp.underlos, inp.surflos);
+    } else if(inBlock < 10) {
+      inp.underlos = MAX(inp.surflos, 0x02);
+    }
+  }
+  percept[inIdx] = inp;
+  
+  //is inp out of los?
+  if(inp.surflos == 0x01) { 
+    //yes: it doesn't matter whether in's top or bottom are -- out certainly won't be in los.
+    outp.toplos = outp.surflos = outp.underlos = 0x01;
+    //update the index.
+    percept[outIdx] = outp;
+    return outp;
   }
   
-  unsigned int destIndex  = tile_index(x, y, z, map_size(m), bpos, bsz);
-  perception flg          = percept[destIndex];
-  unsigned char los       = flg.surflos;
+  //inp is in los.  is outp?
+  unsigned char outBlock;
+  //are outp's top or bottom in los?
+  //is the light leaving the bottom?
+  if(z < pZ) {
+    //yes: the underside will be in los if in.top is AND if in's ceiling accepts light
+    inBlock = tile_opacity_direction(inTile, DirZMinusIn);
+    if(inBlock > 10) { outp.underlos = 0x01; }
+    else if(inBlock > 5) { outp.underlos = 0x02; }
+    else { outp.underlos = inp.toplos; }
+  //is the light leaving the top?
+  } else if(z > pZ) {
+    //yes: the top itself will be in los if in.under is AND if in's floor accepts light
+    inBlock = tile_opacity_direction(inTile, DirZPlusIn);
+    if(inBlock > 10) { outp.toplos = 0x01; }
+    else if(inBlock > 5) { outp.toplos = 0x02; }
+    else { outp.toplos = inp.underlos; }
+  }
   
-  //if the next tile is not in los...
-  if(los == 0x01) {
-    //the previous tiles must all be not in los as well.
-    return 0x01; //bail and propagate
-  } 
-  //if the next tile is in los...
-  if(los > 0x01)
-  {
-    //and the next tile won't permit light towards us...
-    if(blockage >= 10) { //this is really not quite right -- should use amount of light transfer.
-      //the previous tile is not in los.
-      return 0x01;
-    //and the next tile is partially in los...
-    } else if(blockage >= 0x05 && blockage < 0x10) {
-      //the previous tile is partially in los (later, use subtraction instead of a direct set, use higher-bitdepth los (see comment on previous if))
-      return 0x02;
-    //and the next tile does not block los...
-    } else {
-      //the previous tile is as in-los as the next tile.
-      return los;
+  //is outp's surface in los?
+  //it only is if any of:
+    //outp's top is in los and outp emits light out the top
+    //outp's bottom is in los and outp emits light out the bottom
+    //inp's surface is in los and outp emits light towards inp
+  outp.surflos = 0x01;
+  if(outp.toplos > 0x01 && (z != pZ)) {
+    outBlock = tile_opacity_direction(outTile, DirZPlusOut);
+    if(outBlock < 5) {
+      outp.surflos = MAX(outp.surflos, outp.toplos);
+    } else if(outBlock < 10) {
+      outp.surflos = MAX(outp.surflos, 0x02);
     }
   }
-  //otherwise, we're tracing through a tile with unknown los.
-  //trace to the next tile, which may have a known los.
-  unsigned char reclos = map_trace_light(m, percept, bd, bpos, bsz, x, y, z);
-  percept[destIndex].toplos = reclos;
-  percept[destIndex].surflos = reclos;
-  //if the next tile is not in los...
-  if(reclos == 0x01) {
-    //the previous tiles must all be not in los as well.
-    return 0x01; //bail and propagate
-  } 
-  //if the next tile is in los...
-  if(reclos > 0x01)
-  {
-    //and the next tile blocks light in this direction...
-    if(blockage >= 10) {
-      //the previous tile is not in los.
-      return 0x01;
-    //and the next tile is partially in los...
-    } else if(blockage >= 5 && blockage < 10) {
-      //the previous tile is partially in los (later, use subtraction instead of a direct set)
-      return 0x02;
-    //and the next tile does not block los...
-    } else {
-      //the previous tile is as in-los as the next tile.
-      return reclos;
+  if(outp.underlos > 0x01 && (z != pZ)) {
+    outBlock = tile_opacity_direction(outTile, DirZMinusOut);
+    if(outBlock < 5) {
+      outp.surflos = MAX(outp.surflos, outp.underlos);
+    } else if(outBlock < 10) {
+      outp.surflos = MAX(outp.surflos, 0x02);
     }
   }
-  //for some reason, we still don't know whether we're in los.
-  return 0x00;
+  if(inp.surflos > 0x01 && (z == pZ)) {
+    outBlock = tile_opacity_direction(outTile, outDir);
+    if(outBlock < 5) {
+      outp.surflos = MAX(outp.surflos, inp.surflos);
+    } else if(outBlock < 10) {
+      outp.surflos = MAX(outp.surflos, 0x02);
+    }
+  }
+  //outp's top and bottom could be lit if outp's surflos is > 1 and out emits light those ways
+  // if(outp.underlos == 0x00) {
+  //   outp.underlos = 0x01;
+  //   if(outp.surflos > 0x01) {
+  //     //light leaves the floor
+  //     outBlock = tile_opacity_direction(outTile, DirZMinusOut);
+  //     if(outBlock < 5) {
+  //       outp.underlos = MAX(outp.underlos, outp.surflos);
+  //     } else if(outBlock < 10) {
+  //       outp.underlos = MAX(outp.underlos, 0x02);
+  //     }
+  //   }
+  // }
+  // if(outp.toplos == 0x00) {
+  //   outp.toplos = 0x01;
+  //   if(outp.surflos > 0x01) {
+  //     outBlock = tile_opacity_direction(outTile, DirZPlusOut);
+  //     if(outBlock < 5) {
+  //       outp.toplos = MAX(outp.toplos, outp.surflos);
+  //     } else if(outBlock < 10) {
+  //       outp.toplos = MAX(outp.toplos, 0x02);
+  //     }
+  //   }
+  // }
+  percept[outIdx] = outp;
+  return outp; 
 }
 //refactor to support an interface that includes a Light and updates the lit flags rather than the viz flags.
 void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, mapVec bsz) {
@@ -288,7 +346,6 @@ void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, 
   mapVec size = m->sz, cur;
   unsigned int index, destIndex;
   perception newFlags;
-  unsigned char los, litFlags;
   perception mapItem;
   
   int zstart = CLIP(bpos.z, 0, size.z);
@@ -305,14 +362,15 @@ void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, 
         destIndex = tile_index(x, y, z, size, bpos, bsz);
 
         mapItem   = m->perceptmap[index];
-        litFlags  = mapItem.surflit;
         newFlags  = percept[destIndex];
-        newFlags.toplit = litFlags;
-        newFlags.surflit = litFlags;
+        
+        newFlags.toplit = mapItem.toplit;
+        newFlags.surflit = mapItem.surflit;
+        newFlags.underlit = mapItem.underlit;
                 
         cur = (mapVec){x, y, z};
         //vol is 0 0 if unsure, 1 1 if known vol, 1 0 if edge of vol, 0 1 if known out-of-vol.
-        if(newFlags.surfvol == 0x00) { //not right anymore, three vol flags?
+        if(newFlags.surfvol == 0x00 || newFlags.topvol == 0x00 || newFlags.undervol == 0x00) { //not right anymore, three vol flags?
           //if it's within the volume
           if(volume_contains_point(vol, cur, 0.0)) {
             newFlags.topvol = 0x03;
@@ -325,15 +383,12 @@ void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, 
           }
           percept[destIndex] = newFlags;
         }
-        if(newFlags.surflos == 0x00) { //not right anymore, three vol flags?
+        if(newFlags.surflos == 0x00 || newFlags.toplos == 0x00 || newFlags.underlos == 0x00) {
           TCOD_bresenham3_data_t bd;
           TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
           //this is a recursive fn that is also destructive to flags.  keep that in mind!
           //trace from this tile to the sensor
-          los = map_trace_light(m, percept, &bd, bpos, bsz, x, y, z);
-          newFlags.toplos = los;
-          newFlags.surflos = los;
-          percept[destIndex] = newFlags;
+          newFlags = map_trace(m, percept, &bd, bpos, bsz, x, y, z);
         }
       }
     }
@@ -363,13 +418,13 @@ mapVec map_size(Map m) {
 
 //convenience methods --all mean "top or surface", do not include underside
 bool map_item_lit(perception pcpt) {
-  return pcpt.toplit || pcpt.surflit;
+  return (pcpt.toplit > 0x01) || (pcpt.surflit > 0x01);
 }
 bool map_item_in_volume(perception pcpt) {
-  return pcpt.topvol || pcpt.surfvol;
+  return (pcpt.topvol > 0x01) || (pcpt.surfvol > 0x01);
 }
 bool map_item_los(perception pcpt) {
-  return pcpt.toplos || pcpt.surflos;
+  return (pcpt.toplos > 0x01) || (pcpt.surflos > 0x01);
 }
 //lit and in volume and in los
 bool map_item_visible(perception pcpt) {

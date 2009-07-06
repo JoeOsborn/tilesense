@@ -71,12 +71,12 @@ Flagset tile_opacity(Tile t) {
 }
 unsigned char tile_opacity_direction(Tile t, Direction direction) {
   //if the line is moving in multiple directions, take the higher of the opacities...
-  unsigned int blockage = 0;
+  unsigned char blockage = 0;
   if(direction & DirXMinus) {
-    blockage = tile_opacity_xm(t);
+    blockage = MAX(blockage, tile_opacity_xm(t));
   }
   if(direction & DirXPlus) {
-    blockage = tile_opacity_xp(t);
+    blockage = MAX(blockage, tile_opacity_xp(t));
   }
   if(direction & DirYMinus) {
     blockage = MAX(blockage, tile_opacity_ym(t));
@@ -84,25 +84,19 @@ unsigned char tile_opacity_direction(Tile t, Direction direction) {
   if(direction & DirYPlus) {
     blockage = MAX(blockage, tile_opacity_yp(t));
   }
-  unsigned int zBlock = 0;
-  //Z overrides regular blockages if present.  is this correct this way?
   if(direction & DirZMinusIn) { //entering from the ceiling
-    zBlock = tile_opacity_cin(t);
-    blockage = zBlock ? zBlock : blockage;
+    blockage = MAX(blockage, tile_opacity_cin(t));
   }
   if(direction & DirZMinusOut) { //exiting from the floor
-    zBlock = tile_opacity_fout(t);
-    blockage = zBlock ? zBlock : blockage;
+    blockage = MAX(blockage, tile_opacity_fout(t));
   }
   if(direction & DirZPlusIn) { //entering from the floor
-    zBlock = tile_opacity_fin(t);
-    blockage = zBlock ? zBlock : blockage;
+    blockage = MAX(blockage, tile_opacity_fin(t));
   }
   if(direction & DirZPlusOut) { //exiting from the ceiling
-    zBlock = tile_opacity_cout(t);
-    blockage = zBlock ? zBlock : blockage;
+    blockage = MAX(blockage, tile_opacity_cout(t));
   }
-  return (unsigned char)blockage;
+  return blockage;
 }
 
 unsigned char tile_opacity_xm(Tile t) {

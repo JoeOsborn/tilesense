@@ -50,45 +50,79 @@ Also, if there's a way to remove some void*s from my mutually recursive dependen
 Map createmap() {
   Map m = map_new();
   unsigned char tileMap[] = {
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 8, 8, 8, 8, 8, 8, 2,
-    2, 8, 8, 8, 8, 8, 8, 2, //z3 should be invisible from z2, but z2 should be visible from z3
-    2, 8, 8, 8, 8, 8, 8, 2, //8 lets light down through it, but not up through it
-    2, 8, 8, 8, 8, 8, 8, 2,
-    2, 8, 8, 8, 8, 8, 8, 2,
-    2, 8, 8, 8, 8, 8, 8, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
     
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2, 
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,    
-    
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 7, 7, 7, 7, 7, 7, 2,
-    2, 7, 7, 7, 7, 7, 7, 2, //7 lets light go down through it, but not up through it -- so z1 should be visible from z0
-    2, 7, 7, 7, 7, 7, 7, 2,
-    2, 7, 7, 7, 7, 7, 7, 2,
-    2, 7, 7, 7, 7, 7, 7, 2,
-    2, 7, 7, 7, 7, 7, 7, 2,
-    2, 0, 0, 2, 2, 2, 2, 2,    
-    
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 1, 1, 1, 1, 1, 1, 1,
-    2, 1, 3, 5, 5, 4, 1, 1,
-    2, 1, 3, 1, 1, 4, 1, 2,
-    2, 1, 3, 1, 1, 4, 1, 2,
-    2, 1, 3, 6, 6, 4, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 2,
-    2, 1, 1, 2, 1, 1, 2, 2   
+     0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+             
+         8, 8, 8, 8, 8, 8, 8, 8,
+         8, 8, 8, 8, 8, 8, 8, 8,
+         8, 8, 8, 8, 8, 8, 8, 8, //z3 should be invisible from z2, but z2 should be visible from z3
+         8, 8, 8, 8, 8, 8, 8, 8, //8 lets light up through its ceiling, but not down through the floor
+         8, 8, 8, 8, 8, 8, 8, 8,
+         8, 8, 8, 8, 8, 8, 8, 8,
+         8, 8, 8, 8, 8, 8, 8, 8,
+         8, 8, 8, 8, 8, 8, 8, 8,
+         
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,    
+         
+         7, 7, 7, 7, 7, 7, 7, 7,
+         7, 7, 7, 7, 7, 7, 7, 7,
+         7, 7, 7, 7, 7, 7, 7, 7, //7 lets light go down through its floor, but not up through its ceiling -- so z1 should be visible from z0
+         7, 7, 7, 7, 7, 7, 7, 7,
+         7, 7, 7, 7, 7, 7, 7, 7,
+         7, 7, 7, 7, 7, 7, 7, 7,
+         7, 7, 7, 7, 7, 7, 7, 7,
+         7, 7, 7, 7, 7, 7, 7, 7,    
+         
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 3, 5, 5, 5, 5, 4, 1,
+         1, 3, 1, 1, 1, 1, 4, 1,
+         1, 3, 1, 2, 2, 1, 4, 1,
+         1, 3, 1, 2, 2, 1, 4, 1,
+         1, 3, 1, 1, 1, 1, 4, 1,
+         1, 3, 6, 6, 6, 6, 4, 1,
+         1, 1, 1, 1, 1, 1, 1, 1   
+     
+     // 0,0,
+     // 0,0, //should be blocked when below 8
+     // 
+     // 8,8,  //8 blocks light from entering through the floor/leaving through the ceiling
+     // 8,8,
+     // 
+     // 0,0,
+     // 0,0,
+     // 
+     // 7,7, //7 blocks light from entering through the ceiling/leaving through the floor
+     // 7,7,
+     // 
+     // 0,0, //should be blocked when above 7
+     // 0,0
+
+    // 9,
+    // 9,
+    // 7, //standing here means you can't see z=5,6, but you can see z=2,3,4
+    // 9,
+    // 8, //standing here means you can't see z=0 or z=1, but you can see z=2,3,4
+    // 9,
+    // 1
   };
   m = map_init(m, 
     "test_room", 
-    (mapVec){8, 8, 4}, 
+    (mapVec){8,8,5}, 
+    // (mapVec){2,2,5},
     tileMap,
     3,
     NULL,
@@ -119,19 +153,28 @@ Map createmap() {
     tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 15, 15, 15, 15, 15),
     NULL
   );
-  Tile downTile = tile_init( //light can come from y- to y+
+  Tile downTile = tile_init(  //light can come from y- to y+
     tile_new(), 
     tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 15, 0, 15, 15, 15, 15),
     NULL
   );
-  Tile glassFloor = tile_init( //light can come from z- to z+
+  Tile zupOnly = tile_init(   //permits light to come in thru ceiling, out thru floor.
+                              //lets someone below see things above,
+                              //but someone above can't see things below.
     tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 15, 0, 0),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 0, 0, 15),
     NULL
   );
-  Tile glassCeiling = tile_init( //light can come from z+ to z-
+  Tile zdownOnly = tile_init( //permits light to come out thru ceiling, in thru floor
+                              //lets someone above see things below,
+                              //but someone below can't see things above.
     tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 0, 0, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 15, 15, 0),
+    NULL
+  );
+  Tile clearFloor = tile_init(
+    tile_new(),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 0, 0, 0),
     NULL
   );
   map_add_tile(m, floorTile);
@@ -140,8 +183,9 @@ Map createmap() {
   map_add_tile(m, rightTile);
   map_add_tile(m, upTile);
   map_add_tile(m, downTile);
-  map_add_tile(m, glassFloor);
-  map_add_tile(m, glassCeiling);
+  map_add_tile(m, zupOnly);
+  map_add_tile(m, zdownOnly);
+  map_add_tile(m, clearFloor);
   
   map_add_object(m, object_init(object_new(), "a", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
   map_add_object(m, object_init(object_new(), "b", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
@@ -352,12 +396,12 @@ int main(int argc, char **argv) {
   int nb_char_horiz=0,nb_char_vertic=0;
   int font_flags=TCOD_FONT_TYPE_GREYSCALE|TCOD_FONT_LAYOUT_TCOD;
 	TCOD_console_set_custom_font(font,font_flags,nb_char_horiz,nb_char_vertic);
-	TCOD_console_init_root(80,24,"tilesense demo",false);
+	TCOD_console_init_root(100,24,"tilesense demo",false);
 
   Map m = createmap();
   Object playerObj = object_init(object_new(), 
     "@", 
-    (mapVec){3, 1, 1}, 
+    (mapVec){0, 0, 0}, 
     (mapVec){1, 1, 0},
     m,
     NULL
@@ -441,6 +485,10 @@ int main(int argc, char **argv) {
       map_turn_object(m, "@", 1);
     } else if(key.vk == TCODK_LEFT) {
       map_turn_object(m, "@", -1);
+    } else if(key.vk == TCODK_UP) {
+      map_move_object(m, "@", (mapVec){0, 0,  1});
+    } else if(key.vk == TCODK_DOWN) {
+      map_move_object(m, "@", (mapVec){0, 0, -1});
     } else if(key.vk == TCODK_CHAR) {
       switch(key.c) {
         case 'w':
@@ -454,12 +502,6 @@ int main(int argc, char **argv) {
           break;
         case 'd':
           map_move_object(m, "@", (mapVec){1, 0, 0});
-          break;
-        case '<':
-          map_move_object(m, "@", (mapVec){0, 0, 1});
-          break;
-        case '>':
-          map_move_object(m, "@", (mapVec){0, 0, -1});
           break;
         case 'i':
           map_move_object(m, "a", (mapVec){0, -1, 0});

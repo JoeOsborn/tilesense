@@ -51,7 +51,7 @@ Object map_get_object(Map m, int i);
 Object map_get_object_named(Map m, char *id);
 int map_object_count(Map m);
 
-int map_tile_index(Map m, int x, int y, int z);
+unsigned int map_tile_index(Map m, int x, int y, int z);
 unsigned char map_tile_at_index(Map m, int i);
 unsigned char map_tile_at(Map m, int x, int y, int z);
 Tile map_get_tile(Map m, int tileIndex);
