@@ -1,7 +1,7 @@
 SRCDIR=./src
 INCDIR=./include
 CC=gcc
-FLAGS=-ggdb -std=c99
+FLAGS=-ggdb
 .SUFFIXES: .o .h .c
 
 C_OBJS=\

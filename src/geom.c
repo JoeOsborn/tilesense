@@ -17,13 +17,13 @@ Direction direction_between(int pX, int pY, int pZ, int x, int y, int z, int sur
   if(y < pY) { 
     direction |= DirYMinus;
   }
-  if(pZ > surfaceZ && z == surfaceZ) { //z+ -> z
+  if(pZ > z && z == surfaceZ) { //z+ -> z
     direction |= DirZMinusIn;
   }
   if(pZ == surfaceZ && z < pZ) { //z -> z-
     direction |= DirZMinusOut; 
   }
-  if(pZ < surfaceZ && z == pZ) { //z- -> z
+  if(pZ < z && z == surfaceZ) { //z- -> z
     direction |= DirZPlusIn;
   }
   if(pZ == surfaceZ && z > pZ) { //z -> z+
@@ -109,16 +109,20 @@ mapVec mapvec_turn_facing(mapVec f, int amt) {
 int tile_index(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz) {
   //bail on stuff outside of the map
   if(x < 0 || y < 0 || z < 0) {
+    abort();
     return -1;
   }
   if(x >= sz.x || y >= sz.y || z >= sz.z) {
+    abort();
     return -1;
   }
   //bail on stuff outside of bounds
   if(x < borig.x || y < borig.y || z < borig.z) {
+    abort();
     return -1;
   }
   if(x >= borig.x + bsz.x || y >= borig.y + bsz.y || z >= borig.z + bsz.z) {
+    abort();
     return -1;
   }
   //convert from map coord space to bounds coord space

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdio.h>
+
 //use chars for tile indices...
 //then have an int array for all the tile data.  
 //would use flagsets, but it's expensive to return a new flagset for stimulus purposes.
@@ -193,10 +195,10 @@ perception map_trace(Map m,
   mapVec bpos, mapVec bsz, 
   int pX, int pY, int pZ) 
 { 
-  //doesn't work yet, got to figure out why.  build a test room that's smaller and get it working!
-  
   int x,y,z;
-  bool done = TCOD_line3_step_mt(&x, &y, &z, bd) || ((x == bd->destx) && (y== bd->desty) && (z==bd->destz));
+  bool done = 
+    TCOD_line3_step_mt(&x, &y, &z, bd) || 
+    ((x == bd->destx) && (y == bd->desty) && (z == bd->destz));
   if(done) {
     x = bd->destx;
     y = bd->desty;
@@ -205,17 +207,19 @@ perception map_trace(Map m,
   //the "out" tile is the returned tile.
   //the "in" tile is the current tile specified by x,y,z.
   Direction outDir = direction_between(pX,pY,pZ,x,y,z,pZ);
-  Direction inDir = direction_between(pX,pY,pZ,x,y,z,z);
+  Direction inDir  = direction_between(pX,pY,pZ,x,y,z, z);
   
   unsigned int outIdx = tile_index(pX,pY,pZ,map_size(m),bpos,bsz);
   unsigned int inIdx  = tile_index( x, y, z,map_size(m),bpos,bsz);
   
   Tile outTile = map_get_tile(m, m->tilemap[map_tile_index(m, pX, pY, pZ)]);
-  Tile inTile  = map_get_tile(m, m->tilemap[map_tile_index(m, x, y, z)]);
+  Tile inTile  = map_get_tile(m, m->tilemap[map_tile_index(m,  x,  y,  z)]);
   
   perception outp = percept[outIdx];
-  perception inp  = percept[inIdx];
-
+  //perception outLight = m->perceptmap[map_tile_index(m, pX, pY, pZ)];
+  perception inp  = percept[ inIdx];
+  //perception inLight = m->perceptmap[map_tile_index(m, x, y, z)];
+    
   //is inp unknown?
   if(inp.surflos==0x00) {
     //yes: is in == dest?
@@ -241,7 +245,6 @@ perception map_trace(Map m,
     outp.edgelos = inp.surflos;
     if(inBlock > 10) {
       //if it does, outp's edge is in los, but it's surface isn't
-      outp.edgelos = inp.surflos;
       outp.surflos = 0x01;
     } else if(inBlock > 5) {
       //if out blocks light too, out's surface will be blocked
@@ -262,16 +265,45 @@ perception map_trace(Map m,
       }
     }
   } else { //if inp isn't in los, outp certainly won't be
-    outp.edgelos = 0x01;
+  /*((its edge might be in los if in's edge is in los -- this case:
+
+  1  2
+  
+  @  -
+  .  b
+   
+    the line from b on the bottom of z=2 goes through the - top of z=2,
+    but it _should_ go through the top or bottom of z=1.
+    ))
+    really, the above problem should be solved with a floating-point raytrace, not a
+    bresenham-style line trace.  
+    
+    
+    //new issue:
+    
+    start
+    chk: 2, 0, 4; inlos 3, 3; outlos 3, 3
+    chk: 2, 0, 2; inlos 3, 3; outlos 3, 3
+    chk: 1, 0, 1; inlos 3, 3; outlos 3, 3
+    end
+    
+    floor 3 is being skipped completely!  why is bresenham3_c skipping a z level?  this suggests a bug in bres_3, which should probably be fixed whether or not we move to a proper raycaster
+
+
+    */
     outp.surflos = 0x01;
+    outp.edgelos = 0x01;
   }
   percept[outIdx] = outp;
+  // printf("chk: %i, %i, %i; inlos %i, %i; outlos %i, %i\n", x,y,z, inp.surflos, outp.edgelos, outp.surflos, outp.edgelos);
   return outp; 
 }
 //refactor to support an interface that includes a Light and updates the lit flags rather than the viz flags.
 void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, mapVec bsz) {
   //int times = 0;
   mapVec position = volume_position(vol);
+  // printf("\n\n\n");
+  
   mapVec size = m->sz, cur;
   unsigned int index, destIndex;
   perception newFlags;
@@ -313,7 +345,9 @@ void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, 
           TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
           //this is a recursive fn that is also destructive to flags.  keep that in mind!
           //trace from this tile to the sensor
+          // printf("start\n");
           newFlags = map_trace(m, percept, &bd, bpos, bsz, x, y, z);
+          // printf("end\n");
         }
       }
     }

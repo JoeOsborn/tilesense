@@ -6,10 +6,10 @@
 
 Flagset tile_opacity_flagset_make();
 Flagset tile_opacity_flagset_set(Flagset fs, 
-  unsigned char xm, unsigned char xp,  //light leaving to the left, light leaving to the right
-  unsigned char ym, unsigned char yp,  //etc...
-  unsigned char floorIn, unsigned char floorOut,
-  unsigned char ceilIn, unsigned char ceilOut
+  unsigned char xm, unsigned char xp, 
+  unsigned char ym, unsigned char yp, 
+  unsigned char zmOut, unsigned char zmIn,
+  unsigned char zpOut, unsigned char zpIn
 );
 
 struct _tile {

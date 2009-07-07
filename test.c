@@ -95,22 +95,31 @@ Map createmap() {
      //     1, 3, 1, 1, 1, 1, 4, 1,
      //     1, 3, 6, 6, 6, 6, 4, 1,
      //     1, 1, 1, 1, 1, 1, 1, 1   
-     
-     0,0,
-     0,0, //should be blocked when below 8
-     
-     8,8,  //8 blocks light from entering through the floor/leaving through the ceiling
-     8,8,
-     
-     0,0,
-     0,0,
-     
-     7,7, //7 blocks light from entering through the ceiling/leaving through the floor
-     7,7,
-     
-     0,0, //should be blocked when above 7
-     0,0
 
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+                
+     8, 8, 8, 8, 
+     8, 8, 8, 8, 
+     8, 8, 8, 8, 
+     8, 8, 8, 8, 
+                
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+                
+     7, 7, 7, 7, 
+     7, 7, 7, 7, 
+     7, 7, 7, 7, 
+     7, 7, 7, 7, 
+     
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0
     // 9,
     // 9,
     // 7, //standing here means you can't see z=5,6, but you can see z=2,3,4
@@ -121,8 +130,7 @@ Map createmap() {
   };
   m = map_init(m, 
     "test_room", 
-    // (mapVec){8,8,5}, 
-    (mapVec){2,2,5},
+    (mapVec){4,4,5},
     tileMap,
     3,
     NULL,
@@ -163,27 +171,27 @@ Map createmap() {
     tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 15, 0, 15, 15, 15, 15),
     NULL
   );
-  Tile zupOnly = tile_init(   //permits light to come in thru ceiling, out thru floor.
-                              //lets someone below see things above,
-                              //but someone above can't see things below.
-    tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
-      0, 0, 
-      0, 0, 
-      0, 0,
-      15, 15
-    ),
-    NULL
-  );
-  Tile zdownOnly = tile_init( //permits light to come out thru ceiling, in thru floor
+  Tile blockAbove = tile_init(   //prevents light from entering through the ceiling.
                               //lets someone above see things below,
                               //but someone below can't see things above.
     tile_new(),
     tile_opacity_flagset_set(tile_opacity_flagset_make(), 
       0, 0, 
       0, 0, 
-      15, 15, 
-      0, 0
+      0, 15, //zmout, zmin -- light cannot enter through ceiling
+      0, 0 //zpout, zpin
+    ),
+    NULL
+  );
+  Tile blockBelow = tile_init( //prevents light from entering through the floor.
+                              //lets someone below see things above,
+                              //but someone above can't see things below.
+    tile_new(),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
+      0, 0, 
+      0, 0, 
+      0, 0, //zmout, zmin
+      0, 15 //zpout, zpin -- light cannot enter through floor
     ),
     NULL
   );
@@ -198,14 +206,14 @@ Map createmap() {
   map_add_tile(m, rightTile);
   map_add_tile(m, upTile);
   map_add_tile(m, downTile);
-  map_add_tile(m, zupOnly);
-  map_add_tile(m, zdownOnly);
+  map_add_tile(m, blockAbove);
+  map_add_tile(m, blockBelow);
   map_add_tile(m, clearFloor);
   
-  map_add_object(m, object_init(object_new(), "a", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
-  map_add_object(m, object_init(object_new(), "b", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
-  map_add_object(m, object_init(object_new(), "c", (mapVec){2, 4, 0}, (mapVec){1, 1, 0}, m, NULL));
-  map_add_object(m, object_init(object_new(), "d", (mapVec){6, 6, 0}, (mapVec){1, 1, 0}, m, NULL));
+  // map_add_object(m, object_init(object_new(), "w", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
+  // map_add_object(m, object_init(object_new(), "x", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
+  // map_add_object(m, object_init(object_new(), "y", (mapVec){2, 4, 0}, (mapVec){1, 1, 0}, m, NULL));
+  // map_add_object(m, object_init(object_new(), "z", (mapVec){6, 6, 0}, (mapVec){1, 1, 0}, m, NULL));
 
   return m;
 }
@@ -237,7 +245,11 @@ void drawtiles(Map m, perception *buf, Sensor s, mapVec pos, mapVec size) {
         //TCOD_console_print_left(NULL, drawX, drawY, "%i", index);
         if(map_item_visible(flags)) {
            //visible and lit and in volume
-           TCOD_console_print_left(NULL, drawX, drawY, "%i", tileIndex);
+           if(flags.surflos > 0x01) {
+             TCOD_console_print_left(NULL, drawX, drawY, "%i", tileIndex);
+           } else {
+             TCOD_console_print_left(NULL, drawX, drawY, "-", tileIndex);
+           }
         }
         else if(!map_item_lit(flags) && map_item_in_volume(flags) && map_item_los(flags)) {
           //not lit and viewable
@@ -519,16 +531,16 @@ int main(int argc, char **argv) {
           map_move_object(m, "@", (mapVec){1, 0, 0});
           break;
         case 'i':
-          map_move_object(m, "a", (mapVec){0, -1, 0});
+          map_move_object(m, "w", (mapVec){0, -1, 0});
           break;
         case 'j':
-          map_move_object(m, "a", (mapVec){-1, 0, 0});
+          map_move_object(m, "w", (mapVec){-1, 0, 0});
           break;
         case 'k':
-          map_move_object(m, "a", (mapVec){0, 1, 0});
+          map_move_object(m, "w", (mapVec){0, 1, 0});
           break;
         case 'l':
-          map_move_object(m, "a", (mapVec){1, 0, 0});
+          map_move_object(m, "w", (mapVec){1, 0, 0});
           break;
         case 'q':
           finished = 1;
