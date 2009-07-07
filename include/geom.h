@@ -68,14 +68,13 @@ typedef struct _perception {
   unsigned surflit      : 4;
   unsigned toplit       : 4; //12bit
   
-  unsigned underlos     : 2;
-  unsigned surflos      : 2;
-  unsigned toplos       : 2; //6bit
+  //"edge" is unambiguous for los, given one observer.
+  unsigned edgelos      : 2;
+  unsigned surflos      : 2; //4bit
   
-  unsigned undervol     : 2;
-  unsigned surfvol      : 2;
-  unsigned topvol       : 2; //6bit
-  //24bit
+  //we only calculate body volume for now
+  unsigned surfvol      : 2; //2bit
+  //18bit
 } perception;
 
 extern perception percept_none;

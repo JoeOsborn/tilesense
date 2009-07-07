@@ -27,13 +27,5 @@ Tile tile_init(
 void tile_free(Tile t);
 Flagset tile_opacity(Tile t);
 unsigned char tile_opacity_direction(Tile t, Direction direction);
-unsigned char tile_opacity_xm(Tile t);
-unsigned char tile_opacity_xp(Tile t);
-unsigned char tile_opacity_ym(Tile t);
-unsigned char tile_opacity_yp(Tile t);
-unsigned char tile_opacity_fin(Tile t);
-unsigned char tile_opacity_fout(Tile t);
-unsigned char tile_opacity_cin(Tile t);
-unsigned char tile_opacity_cout(Tile t);
 void *tile_context(Tile t);
 #endif

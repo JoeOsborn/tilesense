@@ -130,7 +130,12 @@ Map createmap() {
   ); 
   Tile floorTile = tile_init(
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 15, 0, 0),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
+      0, 0, 
+      0, 0, 
+      15, 0, //zm out/in
+      0, 15  //zp out/in
+    ),
     NULL
   );
   Tile wallTile = tile_init(
@@ -162,14 +167,24 @@ Map createmap() {
                               //lets someone below see things above,
                               //but someone above can't see things below.
     tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 15, 0, 0, 15),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
+      0, 0, 
+      0, 0, 
+      0, 0,
+      15, 15
+    ),
     NULL
   );
   Tile zdownOnly = tile_init( //permits light to come out thru ceiling, in thru floor
                               //lets someone above see things below,
                               //but someone below can't see things above.
     tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 15, 15, 0),
+    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
+      0, 0, 
+      0, 0, 
+      15, 15, 
+      0, 0
+    ),
     NULL
   );
   Tile clearFloor = tile_init(

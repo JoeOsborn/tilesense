@@ -1,15 +1,15 @@
 #include "tile.h"
 #include <stdlib.h>
 
-#define TILE_OPACITY_PART_SZ 4
-#define TILE_OPACITY_XM_OFF  0
-#define TILE_OPACITY_XP_OFF  4
-#define TILE_OPACITY_YM_OFF  8
-#define TILE_OPACITY_YP_OFF 12
-#define TILE_OPACITY_FIN_OFF 16
-#define TILE_OPACITY_FOUT_OFF 20
-#define TILE_OPACITY_CIN_OFF 24
-#define TILE_OPACITY_COUT_OFF 28
+#define TILE_OPACITY_PART_SZ     4
+#define TILE_OPACITY_XM_OFF      0
+#define TILE_OPACITY_XP_OFF      4
+#define TILE_OPACITY_YM_OFF      8
+#define TILE_OPACITY_YP_OFF     12
+#define TILE_OPACITY_ZM_OUT_OFF 16
+#define TILE_OPACITY_ZM_IN_OFF  20
+#define TILE_OPACITY_ZP_OUT_OFF 24
+#define TILE_OPACITY_ZP_IN_OFF  28
 
 
 Flagset tile_opacity_flagset_make() {
@@ -18,8 +18,8 @@ Flagset tile_opacity_flagset_make() {
 Flagset tile_opacity_flagset_set(Flagset opacity, 
   unsigned char xm, unsigned char xp, 
   unsigned char ym, unsigned char yp, 
-  unsigned char fin, unsigned char fout,
-  unsigned char cin, unsigned char cout
+  unsigned char zmOut, unsigned char zmIn,
+  unsigned char zpOut, unsigned char zpIn
 ) {
   if(xm <= 15) {
     flagset_set_raw(opacity, TILE_OPACITY_XM_OFF, TILE_OPACITY_PART_SZ, xm);    
@@ -33,17 +33,17 @@ Flagset tile_opacity_flagset_set(Flagset opacity,
   if(yp <= 15) {
     flagset_set_raw(opacity, TILE_OPACITY_YP_OFF, TILE_OPACITY_PART_SZ, yp);    
   }
-  if(fin <= 15) {
-    flagset_set_raw(opacity, TILE_OPACITY_FIN_OFF, TILE_OPACITY_PART_SZ, fin);    
+  if(zmOut <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_ZM_OUT_OFF, TILE_OPACITY_PART_SZ, zmOut);    
   }
-  if(fout <= 15) {
-    flagset_set_raw(opacity, TILE_OPACITY_FOUT_OFF, TILE_OPACITY_PART_SZ, fout);    
+  if(zmIn <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_ZM_IN_OFF, TILE_OPACITY_PART_SZ, zmIn);    
   }
-  if(cin <= 15) {
-    flagset_set_raw(opacity, TILE_OPACITY_CIN_OFF, TILE_OPACITY_PART_SZ, cin);    
+  if(zpOut <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_ZP_OUT_OFF, TILE_OPACITY_PART_SZ, zpOut);    
   }
-  if(cout <= 15) {
-    flagset_set_raw(opacity, TILE_OPACITY_COUT_OFF, TILE_OPACITY_PART_SZ, cout);    
+  if(zpIn <= 15) {
+    flagset_set_raw(opacity, TILE_OPACITY_ZP_IN_OFF, TILE_OPACITY_PART_SZ, zpIn);    
   }
   return opacity;
 }
@@ -69,60 +69,39 @@ void tile_free(Tile t) {
 Flagset tile_opacity(Tile t) {
   return t->opacity;
 }
+
+#define GET_PART(Part) (flagset_get_raw(t->opacity, Part, TILE_OPACITY_PART_SZ))
 unsigned char tile_opacity_direction(Tile t, Direction direction) {
   //if the line is moving in multiple directions, take the higher of the opacities...
   unsigned char blockage = 0;
   if(direction & DirXMinus) {
-    blockage = MAX(blockage, tile_opacity_xm(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_XM_OFF));
   }
   if(direction & DirXPlus) {
-    blockage = MAX(blockage, tile_opacity_xp(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_XP_OFF));
   }
   if(direction & DirYMinus) {
-    blockage = MAX(blockage, tile_opacity_ym(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_YM_OFF));
   }
   if(direction & DirYPlus) {
-    blockage = MAX(blockage, tile_opacity_yp(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_YP_OFF));
   }
   if(direction & DirZMinusIn) { //entering from the ceiling
-    blockage = MAX(blockage, tile_opacity_cin(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_ZM_IN_OFF));
   }
   if(direction & DirZMinusOut) { //exiting from the floor
-    blockage = MAX(blockage, tile_opacity_fout(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_ZM_OUT_OFF));
   }
   if(direction & DirZPlusIn) { //entering from the floor
-    blockage = MAX(blockage, tile_opacity_fin(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_ZP_IN_OFF));
   }
   if(direction & DirZPlusOut) { //exiting from the ceiling
-    blockage = MAX(blockage, tile_opacity_cout(t));
+    blockage = MAX(blockage, GET_PART(TILE_OPACITY_ZP_OUT_OFF));
   }
   return blockage;
 }
+#undef GET_PART
 
-unsigned char tile_opacity_xm(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_XM_OFF, TILE_OPACITY_PART_SZ);
-}
-unsigned char tile_opacity_xp(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_XP_OFF, TILE_OPACITY_PART_SZ);
-}
-unsigned char tile_opacity_ym(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_YM_OFF, TILE_OPACITY_PART_SZ);
-}
-unsigned char tile_opacity_yp(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_YP_OFF, TILE_OPACITY_PART_SZ);
-}
-unsigned char tile_opacity_fin(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_FIN_OFF, TILE_OPACITY_PART_SZ);
-}
-unsigned char tile_opacity_fout(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_FOUT_OFF, TILE_OPACITY_PART_SZ);
-}
-unsigned char tile_opacity_cin(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_CIN_OFF, TILE_OPACITY_PART_SZ);
-}
-unsigned char tile_opacity_cout(Tile t) {
-  return flagset_get_raw(t->opacity, TILE_OPACITY_COUT_OFF, TILE_OPACITY_PART_SZ);
-}
 void *tile_context(Tile t) {
   return t->context;
 }

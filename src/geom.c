@@ -172,6 +172,6 @@ Plane plane_normalize(Plane p) {
 
 perception percept_none = {
   0,0,0,
-  0,0,0,
-  0,0,0
+  0,0,
+  0
 };
