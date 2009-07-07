@@ -51,65 +51,65 @@ Map createmap() {
   Map m = map_new();
   unsigned char tileMap[] = {
     
-     0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-             
-         8, 8, 8, 8, 8, 8, 8, 8,
-         8, 8, 8, 8, 8, 8, 8, 8,
-         8, 8, 8, 8, 8, 8, 8, 8, //z3 should be invisible from z2, but z2 should be visible from z3
-         8, 8, 8, 8, 8, 8, 8, 8, //8 lets light up through its ceiling, but not down through the floor
-         8, 8, 8, 8, 8, 8, 8, 8,
-         8, 8, 8, 8, 8, 8, 8, 8,
-         8, 8, 8, 8, 8, 8, 8, 8,
-         8, 8, 8, 8, 8, 8, 8, 8,
-         
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0, 
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0,    
-         
-         7, 7, 7, 7, 7, 7, 7, 7,
-         7, 7, 7, 7, 7, 7, 7, 7,
-         7, 7, 7, 7, 7, 7, 7, 7, //7 lets light go down through its floor, but not up through its ceiling -- so z1 should be visible from z0
-         7, 7, 7, 7, 7, 7, 7, 7,
-         7, 7, 7, 7, 7, 7, 7, 7,
-         7, 7, 7, 7, 7, 7, 7, 7,
-         7, 7, 7, 7, 7, 7, 7, 7,
-         7, 7, 7, 7, 7, 7, 7, 7,    
-         
-         1, 1, 1, 1, 1, 1, 1, 1,
-         1, 3, 5, 5, 5, 5, 4, 1,
-         1, 3, 1, 1, 1, 1, 4, 1,
-         1, 3, 1, 2, 2, 1, 4, 1,
-         1, 3, 1, 2, 2, 1, 4, 1,
-         1, 3, 1, 1, 1, 1, 4, 1,
-         1, 3, 6, 6, 6, 6, 4, 1,
-         1, 1, 1, 1, 1, 1, 1, 1   
+     // 0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //         
+     //     8, 8, 8, 8, 8, 8, 8, 8,
+     //     8, 8, 8, 8, 8, 8, 8, 8,
+     //     8, 8, 8, 8, 8, 8, 8, 8, //z3 should be invisible from z2, but z2 should be visible from z3
+     //     8, 8, 8, 8, 8, 8, 8, 8, //8 lets light up through its ceiling, but not down through the floor
+     //     8, 8, 8, 8, 8, 8, 8, 8,
+     //     8, 8, 8, 8, 8, 8, 8, 8,
+     //     8, 8, 8, 8, 8, 8, 8, 8,
+     //     8, 8, 8, 8, 8, 8, 8, 8,
+     //     
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0, 
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,
+     //     0, 0, 0, 0, 0, 0, 0, 0,    
+     //     
+     //     7, 7, 7, 7, 7, 7, 7, 7,
+     //     7, 7, 7, 7, 7, 7, 7, 7,
+     //     7, 7, 7, 7, 7, 7, 7, 7, //7 lets light go down through its floor, but not up through its ceiling -- so z1 should be visible from z0
+     //     7, 7, 7, 7, 7, 7, 7, 7,
+     //     7, 7, 7, 7, 7, 7, 7, 7,
+     //     7, 7, 7, 7, 7, 7, 7, 7,
+     //     7, 7, 7, 7, 7, 7, 7, 7,
+     //     7, 7, 7, 7, 7, 7, 7, 7,    
+     //     
+     //     1, 1, 1, 1, 1, 1, 1, 1,
+     //     1, 3, 5, 5, 5, 5, 4, 1,
+     //     1, 3, 1, 1, 1, 1, 4, 1,
+     //     1, 3, 1, 2, 2, 1, 4, 1,
+     //     1, 3, 1, 2, 2, 1, 4, 1,
+     //     1, 3, 1, 1, 1, 1, 4, 1,
+     //     1, 3, 6, 6, 6, 6, 4, 1,
+     //     1, 1, 1, 1, 1, 1, 1, 1   
      
-     // 0,0,
-     // 0,0, //should be blocked when below 8
-     // 
-     // 8,8,  //8 blocks light from entering through the floor/leaving through the ceiling
-     // 8,8,
-     // 
-     // 0,0,
-     // 0,0,
-     // 
-     // 7,7, //7 blocks light from entering through the ceiling/leaving through the floor
-     // 7,7,
-     // 
-     // 0,0, //should be blocked when above 7
-     // 0,0
+     0,0,
+     0,0, //should be blocked when below 8
+     
+     8,8,  //8 blocks light from entering through the floor/leaving through the ceiling
+     8,8,
+     
+     0,0,
+     0,0,
+     
+     7,7, //7 blocks light from entering through the ceiling/leaving through the floor
+     7,7,
+     
+     0,0, //should be blocked when above 7
+     0,0
 
     // 9,
     // 9,
@@ -121,8 +121,8 @@ Map createmap() {
   };
   m = map_init(m, 
     "test_room", 
-    (mapVec){8,8,5}, 
-    // (mapVec){2,2,5},
+    // (mapVec){8,8,5}, 
+    (mapVec){2,2,5},
     tileMap,
     3,
     NULL,
