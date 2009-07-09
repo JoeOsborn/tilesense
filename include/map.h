@@ -11,11 +11,17 @@
 struct _map {
   char *id;
   mapVec sz;
+  //maps indices to tile coordinates
   unsigned char *tilemap;
-  perception *perceptmap;
+  //used to fill in lighting, etc for sensors; stores full-res light information
+  perception *perceptmap; 
+  //scratchpad for calculating los, lighting, etc.
+  TCOD_map3_t fovmap;
+  bool fovmapDirty;
+  //maps tile indices to tile definitions
   TCOD_list_t tileset;
   char ambientLight;
-  TCOD_list_t exits;
+  // TCOD_list_t exits;
   TCOD_list_t objects;
   void *context;
 };
@@ -35,8 +41,8 @@ Map map_init(
 );
 void map_free(Map m);
 mapVec map_size(Map m);
-void map_add_exit(Map m, Exit ex);
-void map_remove_exit(Map m, Exit ex);
+// void map_add_exit(Map m, Exit ex);
+// void map_remove_exit(Map m, Exit ex);
 void map_get_region(Map m, perception *buf, mapVec start, mapVec end, mapVec bpos, mapVec bsz);
 void map_add_tile(Map m, Tile t);
 

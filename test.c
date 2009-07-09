@@ -96,41 +96,30 @@ Map createmap() {
      //     1, 3, 6, 6, 6, 6, 4, 1,
      //     1, 1, 1, 1, 1, 1, 1, 1   
 
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-                
-     8, 8, 8, 8, 
-     8, 8, 8, 8, 
-     8, 8, 8, 8, 
-     8, 8, 8, 8, 
-                
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-                
-     7, 7, 7, 7, 
-     7, 7, 7, 7, 
-     7, 7, 7, 7, 
-     7, 7, 7, 7, 
-     
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-     0, 0, 0, 0,
-     0, 0, 0, 0
-    // 9,
-    // 9,
-    // 7, //standing here means you can't see z=5,6, but you can see z=2,3,4
-    // 9,
-    // 8, //standing here means you can't see z=0 or z=1, but you can see z=2,3,4
-    // 9,
-    // 1
+     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+     2, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 2,
+     2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 2,
+     2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 2,
+     2, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 2,
+     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+       
+     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+     2, 0, 0, 0, 0, 2, 1, 1, 1, 1, 1, 2,
+     2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2,
+     2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2,
+     2, 0, 0, 0, 0, 2, 1, 1, 1, 1, 1, 2,
+     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+      
+     2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0,
+     2, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0,
+     2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+     2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+     2, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0,
+     2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0
   };
   m = map_init(m, 
     "test_room", 
-    (mapVec){4,4,5},
+    (mapVec){12,6,3},
     tileMap,
     3,
     NULL,
@@ -138,77 +127,16 @@ Map createmap() {
   ); 
   Tile floorTile = tile_init(
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
-      0, 0, 
-      0, 0, 
-      15, 0, //zm out/in
-      0, 15  //zp out/in
-    ),
+    1,0,1, //transparent, opaque, transparent
     NULL
   );
   Tile wallTile = tile_init(
     tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 15, 15, 15, 15, 15, 15, 15),
-    NULL
-  );
-  Tile leftTile = tile_init( //light can come from x+ to x-
-    tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 15, 0, 0, 15, 15, 15, 15),
-    NULL
-  );
-  Tile rightTile = tile_init( //light can come from x- to x+
-    tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 15, 0, 0, 0, 15, 15, 15, 15),
-    NULL
-  );
-  Tile upTile = tile_init( //light can come from y+ to y-
-    tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 15, 15, 15, 15, 15),
-    NULL
-  );
-  Tile downTile = tile_init(  //light can come from y- to y+
-    tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 15, 0, 15, 15, 15, 15),
-    NULL
-  );
-  Tile blockAbove = tile_init(   //prevents light from entering through the ceiling.
-                              //lets someone above see things below,
-                              //but someone below can't see things above.
-    tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
-      0, 0, 
-      0, 0, 
-      0, 15, //zmout, zmin -- light cannot enter through ceiling
-      0, 0 //zpout, zpin
-    ),
-    NULL
-  );
-  Tile blockBelow = tile_init( //prevents light from entering through the floor.
-                              //lets someone below see things above,
-                              //but someone above can't see things below.
-    tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
-      0, 0, 
-      0, 0, 
-      0, 0, //zmout, zmin
-      0, 15 //zpout, zpin -- light cannot enter through floor
-    ),
-    NULL
-  );
-  Tile clearFloor = tile_init(
-    tile_new(),
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 0, 0, 0, 0, 0, 0, 0, 0),
+    0,0,0,
     NULL
   );
   map_add_tile(m, floorTile);
   map_add_tile(m, wallTile);
-  map_add_tile(m, leftTile);
-  map_add_tile(m, rightTile);
-  map_add_tile(m, upTile);
-  map_add_tile(m, downTile);
-  map_add_tile(m, blockAbove);
-  map_add_tile(m, blockBelow);
-  map_add_tile(m, clearFloor);
   
   // map_add_object(m, object_init(object_new(), "w", (mapVec){1, 1, 0}, (mapVec){1, 1, 0}, m, NULL));
   // map_add_object(m, object_init(object_new(), "x", (mapVec){3, 1, 0}, (mapVec){1, 1, 0}, m, NULL));

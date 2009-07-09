@@ -11,7 +11,6 @@ Sensor sensor_init(Sensor s, char *id, Volume volume, void *context) {
   volume_swept_bounds(s->volume, &(s->borig), &(s->bsz));
   
   s->vistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(perception));
-  s->oldVistiles = calloc(s->bsz.x*s->bsz.y*s->bsz.z, sizeof(perception));
       
   s->visObjects = TCOD_list_new();
   s->oldVisObjects = TCOD_list_new();
@@ -27,9 +26,6 @@ void sensor_free(Sensor s) {
   volume_free(s->volume);
   if(s->vistiles) {
     free(s->vistiles);
-  }
-  if(s->oldVistiles) {
-    free(s->oldVistiles);
   }
   TCOD_list_delete(s->visObjects);
   TCOD_list_delete(s->oldVisObjects);
@@ -72,9 +68,6 @@ void sensor_turn(Sensor s, int amt) {
 
 void sensor_sense(Sensor s) {
   Map m = s->map;
-  perception *temp = s->vistiles;
-  s->vistiles = s->oldVistiles; // tiles from two senses 
-  s->oldVistiles = temp;
   
   mapVec pos=s->borig, sz=s->bsz;
   memset(s->vistiles, 0, sz.x*sz.y*sz.z*sizeof(perception));
@@ -149,7 +142,7 @@ void sensor_visobjs_remove(TCOD_list_t l, Object o) {
 void sensor_push_stimulus(Sensor s, Stimulus stim) {
   mapVec pt, sz;
   perception *newVis;
-  perception *snewVis = s->vistiles, *soldVis=s->oldVistiles;
+  perception *snewVis = s->vistiles;
   perception newPerception;
   bool litAndVisible;
   Object o;
@@ -166,7 +159,6 @@ void sensor_push_stimulus(Sensor s, Stimulus stim) {
           for(int x = pt.x; x < pt.x+sz.x; x++) {
             int stimIndex = tile_index(x, y, z, map_size(m), pt, sz);
             int visIndex = tile_index(x, y, z, map_size(m), borig, bsz);
-            soldVis[visIndex] = snewVis[visIndex];
             snewVis[visIndex] = newVis[stimIndex];
           }
         }

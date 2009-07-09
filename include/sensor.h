@@ -12,7 +12,6 @@ struct _sensor {
   Volume volume;  
 
   perception *vistiles;
-  perception *oldVistiles;
   
   mapVec borig, bsz;
 

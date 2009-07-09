@@ -37,6 +37,8 @@ Map map_init(
   m->tilemap = malloc(sz.x*sz.y*sz.z*sizeof(unsigned char));
   memcpy(m->tilemap, tilemap, sz.x*sz.y*sz.z*sizeof(unsigned char));
   m->perceptmap = calloc(sz.x*sz.y*sz.z, sizeof(perception));
+  m->fovmap = TCOD_map3_new(sz.x,sz.y,sz.z);
+  m->fovmapDirty = true;
   for(int i = 0; i < sz.x*sz.y*sz.z; i++) {
     #warning not really sure about this ambient light stuff, etc.
     m->tilemap[i] = tilemap[i];
@@ -46,16 +48,11 @@ Map map_init(
   }
   m->tileset = TCOD_list_new();
   map_add_tile(m, tile_init(tile_new(), 
-    tile_opacity_flagset_set(tile_opacity_flagset_make(), 
-      0,0,
-      0,0,
-      0,0,
-      0,0
-    ), 
+    1,1,1,
     baseTileCtx
   ));
   m->ambientLight = ambientLight;
-  m->exits = TCOD_list_new();
+  // m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();
   m->context = ctx;
   return m;
@@ -64,10 +61,10 @@ void map_free(Map m) {
   free(m->id);
   free(m->tilemap);
   free(m->perceptmap);
-  for(int i = 0; i < TCOD_list_size(m->exits); i++) {
-    exit_free(TCOD_list_get(m->exits, i));
-  }
-  TCOD_list_delete(m->exits);
+  // for(int i = 0; i < TCOD_list_size(m->exits); i++) {
+  //   exit_free(TCOD_list_get(m->exits, i));
+  // }
+  // TCOD_list_delete(m->exits);
   for(int i = 0; i < TCOD_list_size(m->tileset); i++) {
     tile_free(TCOD_list_get(m->tileset, i));
   }
@@ -82,19 +79,22 @@ void *map_context(Map m) {
 char *map_id(Map m) {
   return m->id;
 }
-void map_add_exit(Map m, Exit ex) {
-  TCOD_list_push(m->exits, ex);
-}
-void map_remove_exit(Map m, Exit ex) {
-  TCOD_list_remove(m->exits, ex);
-}
+// void map_add_exit(Map m, Exit ex) {
+//   TCOD_list_push(m->exits, ex);
+// }
+// void map_remove_exit(Map m, Exit ex) {
+//   TCOD_list_remove(m->exits, ex);
+// }
 
 void map_add_tile(Map m, Tile t) {
   TCOD_list_push(m->tileset, t);
+  m->fovmapDirty=true;
 }
 Tile map_get_tile(Map m, int tileIndex) {
   return TCOD_list_get(m->tileset, tileIndex);
 }
+
+//adding/removing/moving large objects might result in fovmap dirtiness too
 
 void map_add_object(Map m, Object o) {
   TCOD_list_push(m->objects, o);
@@ -182,124 +182,34 @@ Tile map_get_tiledef(Map m, int i) {
   return TCOD_list_get(m->tileset, i);
 }
 
-// typedef enum {
-//   MapTraceNone=0,
-//   MapTraceLOS=1,
-//   MapTraceLight=2,
-//   MapTraceBoth=3
-// } MapTraceMode;
-
-perception map_trace(Map m, 
-  perception *percept, 
-  TCOD_bresenham3_data_t *bd, 
-  mapVec bpos, mapVec bsz, 
-  int pX, int pY, int pZ) 
-{ 
-  int x,y,z;
-  bool done = 
-    TCOD_line3_step_mt(&x, &y, &z, bd) || 
-    ((x == bd->destx) && (y == bd->desty) && (z == bd->destz));
-  if(done) {
-    x = bd->destx;
-    y = bd->desty;
-    z = bd->destz;
-  }
-  //the "out" tile is the returned tile.
-  //the "in" tile is the current tile specified by x,y,z.
-  Direction outDir = direction_between(pX,pY,pZ,x,y,z,pZ);
-  Direction inDir  = direction_between(pX,pY,pZ,x,y,z, z);
-  
-  unsigned int outIdx = tile_index(pX,pY,pZ,map_size(m),bpos,bsz);
-  unsigned int inIdx  = tile_index( x, y, z,map_size(m),bpos,bsz);
-  
-  Tile outTile = map_get_tile(m, m->tilemap[map_tile_index(m, pX, pY, pZ)]);
-  Tile inTile  = map_get_tile(m, m->tilemap[map_tile_index(m,  x,  y,  z)]);
-  
-  perception outp = percept[outIdx];
-  //perception outLight = m->perceptmap[map_tile_index(m, pX, pY, pZ)];
-  perception inp  = percept[ inIdx];
-  //perception inLight = m->perceptmap[map_tile_index(m, x, y, z)];
-    
-  //is inp unknown?
-  if(inp.surflos==0x00) {
-    //yes: is in == dest?
-    if(done) {
-      //yes: in.surflos = 0x03
-      //destination is always in surface and edge los.
-      inp.surflos=0x03;
-      inp.edgelos=0x03;
-      //update the index.
-      percept[inIdx] = inp;
-    } else {
-      //no: in = recurse (map will be updated during recursion)
-      inp = map_trace(m, percept, bd, bpos, bsz, x, y, z);
-    }
-  }
-  unsigned char inBlock, outBlock;
-  inBlock = tile_opacity_direction(inTile, inDir);
-  outBlock = tile_opacity_direction(outTile, outDir);
-  //is in in los?
-  if(inp.surflos > 0x01 && (outp.surflos == 0x00 || outp.edgelos == 0x00)) {
-    //if inp is in los, does it block light from outp?
-    //(no matter what, outp's edge is as in-los as in's surface)
-    outp.edgelos = inp.surflos;
-    if(inBlock > 10) {
-      //if it does, outp's edge is in los, but it's surface isn't
-      outp.surflos = 0x01;
-    } else if(inBlock > 5) {
-      //if out blocks light too, out's surface will be blocked
-      if(outBlock > 10) {
-        outp.surflos = 0x01;
-        //otherwise, it's partially in los
-      } else {
-        outp.surflos = 0x02;
-      }
-    } else {
-      //if in doesn't block any, out's surface is lit according to its own light transfer
-      if(outBlock > 10) {
-        outp.surflos = 0x01;
-      } else if(outBlock > 5) {
-        outp.surflos = 0x02;
-      } else {
-        outp.surflos = inp.surflos;
+void map_remake_fovmap(Map m) {
+  // TCOD_map3_set_properties(TCOD_map3_t map, int x, int y, int z, bool is_transparent, bool floor_transparent, bool ceiling_transparent, bool is_walkable, bool ramp_down, bool ramp_up);
+  for(int x = 0; x < m->sz.x; x++) {
+    for(int y = 0; y < m->sz.y; y++) {
+      for(int z = 0; z < m->sz.z; z++) {
+        Tile tile = map_get_tiledef(m, map_tile_at(m, x, y, z));
+        bool wallTransparent = tile_wall_transparent(tile);
+        bool floorTransparent = tile_floor_transparent(tile);
+        bool ceilTransparent = tile_ceiling_transparent(tile);
+        //uh, I guess map is going to need to know about passability eventually?
+        //maybe a callback? or maybe just make clients make their own TCOD_map3_t.
+        bool wallPassable  = wallTransparent;
+        bool floorPassable = floorTransparent;
+        bool ceilPassable  = ceilTransparent;
+        
+        TCOD_map3_set_properties(m->fovmap, x, y, z, wallTransparent, floorTransparent, ceilTransparent, wallPassable, floorPassable, ceilPassable);
       }
     }
-  } else { //if inp isn't in los, outp certainly won't be
-  /*((its edge might be in los if in's edge is in los -- this case:
-
-  1  2
-  
-  @  -
-  .  b
-   
-    the line from b on the bottom of z=2 goes through the - top of z=2,
-    but it _should_ go through the top or bottom of z=1.
-    ))
-    really, the above problem should be solved with a floating-point raytrace, not a
-    bresenham-style line trace.  
-    
-    
-    //new issue:
-    
-    start
-    chk: 2, 0, 4; inlos 3, 3; outlos 3, 3
-    chk: 2, 0, 2; inlos 3, 3; outlos 3, 3
-    chk: 1, 0, 1; inlos 3, 3; outlos 3, 3
-    end
-    
-    floor 3 is being skipped completely!  why is bresenham3_c skipping a z level?  this suggests a bug in bres_3, which should probably be fixed whether or not we move to a proper raycaster
-
-
-    */
-    outp.surflos = 0x01;
-    outp.edgelos = 0x01;
   }
-  percept[outIdx] = outp;
-  // printf("chk: %i, %i, %i; inlos %i, %i; outlos %i, %i\n", x,y,z, inp.surflos, outp.edgelos, outp.surflos, outp.edgelos);
-  return outp; 
+  m->fovmapDirty = false;
 }
+
 //refactor to support an interface that includes a Light and updates the lit flags rather than the viz flags.
 void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, mapVec bsz) {
+  //fovmap is dirty if tile defs have changed
+  if(m->fovmapDirty) {
+    map_remake_fovmap(m);
+  }
   //int times = 0;
   mapVec position = volume_position(vol);
   // printf("\n\n\n");
@@ -316,6 +226,15 @@ void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, 
   int xstart = CLIP(bpos.x, 0, size.x);
   int xend = CLIP(bpos.x+bsz.x, 0, size.x);
   
+  TCOD_map3_compute_fov(m->fovmap,
+    position.x,position.y,position.z,
+    mapvec_magnitude(bsz),
+    true,
+    FOV3_DIAMOND
+  );
+  //place the artificial boundaries imposed by the volume?
+  //nah, too expensive to undo the artificial boundaries.
+  //just copy vol/lit/los data
   for(int z = zstart; z < zend; z++) {
     for(int y = ystart; y < yend; y++) {
       for(int x = xstart; x < xend; x++) {
@@ -331,23 +250,21 @@ void map_get_visible_tiles(Map m, perception *percept, Volume vol, mapVec bpos, 
                 
         cur = (mapVec){x, y, z};
         //vol is 0 0 if unsure, 1 1 if known vol, 1 0 if edge of vol, 0 1 if known out-of-vol.
-        if(newFlags.surfvol == 0x00) { //not right anymore, three vol flags?
+        if(newFlags.surfvol == 0x00) {
           //if it's within the volume
           if(volume_contains_point(vol, cur, 0.0)) {
             newFlags.surfvol = 0x03;
           } else {
             newFlags.surfvol = 0x01;
+            //could potentially be faster to do volume in a seperate pass over
+            //all tiles to add more obstacles to the fovmap.
+            TCOD_map3_set_in_fov(m->fovmap, x,y,z, 0);
           }
           percept[destIndex] = newFlags;
         }
         if(newFlags.surflos == 0x00 || newFlags.edgelos == 0x00) {
-          TCOD_bresenham3_data_t bd;
-          TCOD_line3_init_mt(cur.x, cur.y, cur.z, position.x, position.y, position.z, &bd);
-          //this is a recursive fn that is also destructive to flags.  keep that in mind!
-          //trace from this tile to the sensor
-          // printf("start\n");
-          newFlags = map_trace(m, percept, &bd, bpos, bsz, x, y, z);
-          // printf("end\n");
+          newFlags.surflos = newFlags.edgelos = (TCOD_map3_is_in_fov(m->fovmap,x,y,z) ? 0x03 : 0x01);
+          percept[destIndex] = newFlags;
         }
       }
     }

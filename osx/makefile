@@ -50,7 +50,7 @@ PNG_LIBS=$(PNG_DIR)/lib/osx/libpng.a
 # TCOD
 TCOD_DIR=libtcod
 TCOD_FLAGS=-I $(TCOD_DIR)/include -I $(TCOD_DIR)/include/gui
-TCOD_LIBS=$(TCOD_DIR)/libtcod.a
+TCOD_LIBS=$(TCOD_DIR)/libtcod-debug.a
 
 CFLAGS=$(FLAGS) -std=gnu9x -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
 
