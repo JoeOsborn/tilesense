@@ -35,8 +35,8 @@ void flagschema_insert(FlagSchema schema, char *path, unsigned int bitsize);
 FlagSchema flagschema_path_get_subschema(FlagSchema fs, char *path);
 FlagSchema flagschema_index_get_subschema(FlagSchema fs, int index);
 
-void flagschema_path_get_offset_size(FlagSchema fs, char *path, unsigned int *offset, unsigned int *bits);
-void flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits);
+bool flagschema_path_get_offset_size(FlagSchema fs, char *path, unsigned int *offset, unsigned int *bits);
+bool flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits);
 
 
 typedef unsigned char * Flagset;

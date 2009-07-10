@@ -126,7 +126,7 @@ FlagSchema flagschema_index_get_subschema(FlagSchema fs, int index) {
   return entry ? entry->children : NULL;
 }
 
-void flagschema_path_get_offset_size(FlagSchema fs, char *key, unsigned int *offset, unsigned int *bits) {
+bool flagschema_path_get_offset_size(FlagSchema fs, char *key, unsigned int *offset, unsigned int *bits) {
   struct _flag_schema_entry *entry = flagschema_path_find_entry(fs, key);
   if(entry) {
     if(offset) {
@@ -135,16 +135,22 @@ void flagschema_path_get_offset_size(FlagSchema fs, char *key, unsigned int *off
     if(bits) {
       *bits = entry->bitsize;
     }
+    return true;
   }
+  return false;
 }
-void flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits) {
+bool flagschema_index_get_offset_size(FlagSchema fs, int index, unsigned int *offset, unsigned int *bits) {
   struct _flag_schema_entry *entry = TCOD_list_get(fs, index);
-  if(offset) {
-    *offset = entry ? entry->offset : -1;
+  if(entry) {
+    if(offset) {
+      *offset = entry->offset;
+    }
+    if(bits) {
+      *bits = entry->bitsize;
+    }
+    return true;
   }
-  if(bits) {
-    *bits = entry ? entry->bitsize : -1;
-  }
+  return false;
 }
 
 unsigned int flagschema_net_size(FlagSchema fs) {
