@@ -61,6 +61,7 @@ unsigned int map_tile_index(Map m, int x, int y, int z);
 unsigned char map_tile_at_index(Map m, int i);
 unsigned char map_tile_at(Map m, int x, int y, int z);
 Tile map_get_tile(Map m, int tileIndex);
+Tile map_tiledef_at(Map m, int x, int y, int z);
 
 void map_move_object(Map m, char *id, mapVec delta);
 void map_turn_object(Map m, char *id, int amt);

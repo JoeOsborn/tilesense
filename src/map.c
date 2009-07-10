@@ -178,8 +178,12 @@ unsigned char map_tile_at_index(Map m, int i) {
   return m->tilemap[i];
 }
 
-Tile map_get_tiledef(Map m, int i) {
+Tile map_tiledef_at_index(Map m, int i) {
   return TCOD_list_get(m->tileset, i);
+}
+
+Tile map_tiledef_at(Map m, int x, int y, int z) {
+  return map_tiledef_at_index(m, map_tile_at(m, x, y, z));
 }
 
 void map_remake_fovmap(Map m) {
@@ -187,7 +191,7 @@ void map_remake_fovmap(Map m) {
   for(int x = 0; x < m->sz.x; x++) {
     for(int y = 0; y < m->sz.y; y++) {
       for(int z = 0; z < m->sz.z; z++) {
-        Tile tile = map_get_tiledef(m, map_tile_at(m, x, y, z));
+        Tile tile = map_tiledef_at(m, x, y, z);
         bool wallTransparent = tile_wall_transparent(tile);
         bool floorTransparent = tile_floor_transparent(tile);
         bool ceilTransparent = tile_ceiling_transparent(tile);
