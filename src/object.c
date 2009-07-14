@@ -3,6 +3,7 @@
 #include <string.h>
 #include "stimulus.h"
 #include "sensor.h"
+#include "tslist.h"
 
 Object object_new() {
   return malloc(sizeof(struct _object));
@@ -21,14 +22,8 @@ Object object_init(Object o, char *id, mapVec pos, mapVec face, Map m, void *con
 
 void object_free(Object o) {
   free(o->id);
-  for(int i = 0; i < object_sensor_count(o); i++) {
-    object_remove_sensor(o, object_get_sensor(o,i));
-  }
-  TCOD_list_delete(o->sensors);
-  for(int i = 0; i < object_light_count(o); i++) {
-    object_remove_light(o, object_get_light(o,i));
-  }
-  TCOD_list_delete(o->lights);
+  TS_LIST_CLEAR_AND_DELETE(o->lights, light);
+  TS_LIST_CLEAR_AND_DELETE(o->sensors, sensor);
   free(o);
 }
 void *object_context(Object o) {

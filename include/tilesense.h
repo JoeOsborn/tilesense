@@ -12,4 +12,6 @@
 #include <stimulus.h>
 #include <exit.h>
 
+#include <tslist.h>
+
 #endif

@@ -1,6 +1,7 @@
 #include "sensor.h"
 #include <stdlib.h>
 #include <string.h>
+#include "tslist.h"
 
 Sensor sensor_new() {
   return malloc(sizeof(struct _sensor));
@@ -30,7 +31,7 @@ void sensor_free(Sensor s) {
   TCOD_list_delete(s->visObjects);
   TCOD_list_delete(s->oldVisObjects);
 
-  TCOD_list_delete(s->stimuli);
+  TS_LIST_CLEAR_AND_DELETE(s->stimuli, stimulus);
   free(s);
 }
 Volume sensor_volume(Sensor s) {

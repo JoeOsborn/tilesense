@@ -26,6 +26,7 @@ HEADERS=\
   $(INCDIR)/sensor.h \
   $(INCDIR)/stimulus.h \
   $(INCDIR)/tile.h \
+  $(INCDIR)/tslist.h \
   $(INCDIR)/volume.h
 
 TEST_OBJS=\

@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 
+#include "tslist.h"
+
 //use chars for tile indices...
 //then have an int array for all the tile data.  
 //would use flagsets, but it's expensive to return a new flagset for stimulus purposes.
@@ -61,14 +63,8 @@ void map_free(Map m) {
   free(m->id);
   free(m->tilemap);
   free(m->perceptmap);
-  // for(int i = 0; i < TCOD_list_size(m->exits); i++) {
-  //   exit_free(TCOD_list_get(m->exits, i));
-  // }
-  // TCOD_list_delete(m->exits);
-  for(int i = 0; i < TCOD_list_size(m->tileset); i++) {
-    tile_free(TCOD_list_get(m->tileset, i));
-  }
-  TCOD_list_delete(m->tileset);
+//  TS_LIST_CLEAR_AND_DELETE(m->exits, exit);
+  TS_LIST_CLEAR_AND_DELETE(m->tileset, tile);
   free(m);
 }
 

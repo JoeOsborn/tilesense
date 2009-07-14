@@ -1,6 +1,7 @@
 #include "exit.h"
 #include <stdlib.h>
 #include <string.h>
+#include "tslist.h"
 
 Exit exit_new() {
   return malloc(sizeof(struct _exit));

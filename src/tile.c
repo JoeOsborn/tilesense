@@ -1,5 +1,6 @@
 #include "tile.h"
 #include <stdlib.h>
+#include "tslist.h"
 
 Tile tile_new() {
   return malloc(sizeof(struct _tile));
