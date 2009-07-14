@@ -2,19 +2,21 @@ SRCDIR=./src
 INCDIR=./include
 CC=gcc
 FLAGS=-ggdb
+CFLAGS=$(FLAGS) -std=gnu9x -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
 .SUFFIXES: .o .h .c
+TMPDIR=/tmp/tilesense
 
 C_OBJS=\
-  $(SRCDIR)/exit.o \
-  $(SRCDIR)/flagset.o \
-  $(SRCDIR)/geom.o \
-  $(SRCDIR)/light.o \
-  $(SRCDIR)/map.o \
-  $(SRCDIR)/object.o \
-  $(SRCDIR)/sensor.o \
-  $(SRCDIR)/stimulus.o \
-  $(SRCDIR)/tile.o \
-  $(SRCDIR)/volume.o
+  $(TMPDIR)/exit.o \
+  $(TMPDIR)/flagset.o \
+  $(TMPDIR)/geom.o \
+  $(TMPDIR)/light.o \
+  $(TMPDIR)/map.o \
+  $(TMPDIR)/object.o \
+  $(TMPDIR)/sensor.o \
+  $(TMPDIR)/stimulus.o \
+  $(TMPDIR)/tile.o \
+  $(TMPDIR)/volume.o
 
 HEADERS=\
   $(INCDIR)/exit.h \
@@ -30,7 +32,19 @@ HEADERS=\
   $(INCDIR)/volume.h
 
 TEST_OBJS=\
-  test.o
+  $(TMPDIR)/test/test.o
+
+$(TMPDIR) : 
+	mkdir -p $@
+
+$(TMPDIR)/test : 
+	mkdir -p $@
+
+$(TMPDIR)/%.o : $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) -std=gnu9x -g -o $@ -c $<
+
+$(TMPDIR)/test/%.o : $(SRCDIR)/../%.c
+	$(CC) $(CFLAGS) -std=gnu9x -g -o $@ -c $<
 
 #dependencies
 # SDL
@@ -53,16 +67,14 @@ TCOD_DIR=libtcod
 TCOD_FLAGS=-I $(TCOD_DIR)/include -I $(TCOD_DIR)/include/gui
 TCOD_LIBS=$(TCOD_DIR)/libtcod-debug.a
 
-CFLAGS=$(FLAGS) -std=gnu9x -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
-
 $(C_OBJS) : $(HEADERS)
 
-libtilesense.a : $(C_OBJS)
+libtilesense.a : $(TMPDIR) $(C_OBJS)
 	libtool -static -o $@ $(C_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(TCOD_LIBS)
 
 $(TEST_OBJS) : $(HEADERS)
 
-test : libtilesense.a test.o
+test : libtilesense.a $(TMPDIR)/test $(TEST_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(TEST_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(TCOD_LIBS) libtilesense.a
 
 clean :
