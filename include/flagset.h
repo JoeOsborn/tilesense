@@ -47,7 +47,8 @@ Flagset flagset_init(Flagset fs, FlagSchema fsc);
 Flagset flagset_init_raw(Flagset fs, int bits);
 void flagset_free(Flagset fs);
 
-//assumes same schema. a big (f1 & f2) != 0
+//goes over each top-level entry in fsc. 
+//Returns true if any are equal between the two flagsets.
 bool flagset_any_match(Flagset f1, Flagset f2, FlagSchema fsc);
 
 //big-endian multi-byte values

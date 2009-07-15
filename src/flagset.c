@@ -184,16 +184,11 @@ void flagset_free(Flagset fs) {
   free(fs);
 }
 bool flagset_any_match(Flagset f1, Flagset f2, FlagSchema fsc) {
-  unsigned int bits = flagschema_net_size(fsc);
-  unsigned int bytes = bits / 8;
-  if(bits % 8 != 0) {
-    bytes++;
-  }
-  for(int i = 0; i < bytes; i++) {
-    unsigned char left = flagset_get_raw(f1, i*8, 8);
-    unsigned char right = flagset_get_raw(f2, i*8, 8);
-    if((left & right) != 0) { return true; }
-  }
+  TS_LIST_FOREACH(fsc,
+    if(flagset_get_index(f1, __i) == flagset_get_index(f2, __i)) {
+      return true;
+    }
+  );
   return false;
 }
 unsigned int flagset_get_path(Flagset fs, FlagSchema fsc, char *key) {
