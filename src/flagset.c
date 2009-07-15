@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "tslist.h"
 
 struct _flag_schema_entry {
   char *label;
@@ -185,7 +186,7 @@ void flagset_free(Flagset fs) {
 }
 bool flagset_any_match(Flagset f1, Flagset f2, FlagSchema fsc) {
   TS_LIST_FOREACH(fsc,
-    if(flagset_get_index(f1, __i) == flagset_get_index(f2, __i)) {
+    if(flagset_get_index(f1, fsc, __i) == flagset_get_index(f2, fsc, __i)) {
       return true;
     }
   );
