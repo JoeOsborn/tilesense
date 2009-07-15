@@ -192,7 +192,7 @@ bool flagset_any_match(Flagset f1, Flagset f2, FlagSchema fsc) {
   for(int i = 0; i < bytes; i++) {
     unsigned char left = flagset_get_raw(f1, i*8, 8);
     unsigned char right = flagset_get_raw(f2, i*8, 8);
-    if((left | right) != 0) { return true; }
+    if((left & right) != 0) { return true; }
   }
   return false;
 }
