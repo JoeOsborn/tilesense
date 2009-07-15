@@ -14,4 +14,7 @@
 
 #include <tslist.h>
 
+#include <string.h>
+#define STREQ(_a, _b) (strcmp((_a), (_b)) == 0)
+
 #endif
