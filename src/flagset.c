@@ -183,6 +183,19 @@ Flagset flagset_init_raw(Flagset fs, int bits) {
 void flagset_free(Flagset fs) {
   free(fs);
 }
+bool flagset_any_match(Flagset f1, Flagset f2, FlagSchema fsc) {
+  unsigned int bits = flagschema_net_size(fsc);
+  unsigned int bytes = bits / 8;
+  if(bits % 8 != 0) {
+    bytes++;
+  }
+  for(int i = 0; i < bytes; i++) {
+    unsigned char left = flagset_get_raw(f1, i*8, 8);
+    unsigned char right = flagset_get_raw(f2, i*8, 8);
+    if((left | right) != 0) { return true; }
+  }
+  return false;
+}
 unsigned int flagset_get_path(Flagset fs, FlagSchema fsc, char *key) {
   unsigned int offset=0, size=0;
   flagschema_path_get_offset_size(fsc, key, &offset, &size);
