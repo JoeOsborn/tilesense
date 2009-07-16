@@ -26,6 +26,11 @@ void flagschema_free(FlagSchema fs) {
   }
   TCOD_list_delete(fs);
 }
+TCOD_list_t flagschema_get_labels(FlagSchema schema) {
+  TCOD_list_t results = TCOD_list_new();
+  TS_LIST_FOREACH(schema, TCOD_list_push(results, strdup(((struct _flag_schema_entry *)each)->label)));
+  return results;
+}
 struct _flag_schema_entry *flagschema_path_find_entry(FlagSchema fs, char *key) {
   char *next = strchr(key, '.');
   if(next) { next++; }

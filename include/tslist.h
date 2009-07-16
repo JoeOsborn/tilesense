@@ -9,11 +9,11 @@
   _list = NULL;                                     \
 } while(0)
 
-#define TS_LIST_FOREACH(list, op) do {                  \
+#define TS_LIST_FOREACH(_list, _op) do {                \
   void *each = NULL;                                    \
-  for(int __i = 0; __i < TCOD_list_size(list); __i++) { \
-    each = TCOD_list_get(list, __i);                    \
-    op;                                                 \
+  for(int __i = 0; __i < TCOD_list_size(_list); __i++) {\
+    each = TCOD_list_get(_list, __i);                   \
+    _op;                                                \
   }                                                     \
 } while(0)                                              \
 

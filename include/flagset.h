@@ -32,6 +32,8 @@ unsigned int flagschema_net_size(FlagSchema fs);
 //later, make sure this stuff is stored alphabetically?  or not...
 void flagschema_insert(FlagSchema schema, char *path, unsigned int bitsize);
 
+TCOD_list_t flagschema_get_labels(FlagSchema schema);
+
 FlagSchema flagschema_path_get_subschema(FlagSchema fs, char *path);
 FlagSchema flagschema_index_get_subschema(FlagSchema fs, int index);
 
