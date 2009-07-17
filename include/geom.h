@@ -1,10 +1,12 @@
 #ifndef _GEOM_H
 #define _GEOM_H
 
+#include <libtcod.h>
+
 #define PI 3.14159
 #define ONE16TH ((2*PI)/16.0)
 
-#define CLIP(b, a, c) (b < a ? a : (b > c ? c : b))
+#define CLIP(b, a, c) ((b < a) ? a : ((b > c) ? c : b))
 
 typedef enum {
   DirNone   =  0,
@@ -50,6 +52,7 @@ float mapvec_facing_to_radians(mapVec f, int aboutZ);
 mapVec mapvec_rotate(mapVec p, mapVec center, float rads, int aboutZ);
 mapVec mapvec_turn_facing(mapVec facing, int amt);
 
+bool tile_index_in_bounds(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz);
 int tile_index(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz);
 
 typedef struct {

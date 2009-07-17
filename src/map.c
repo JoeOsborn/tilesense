@@ -280,10 +280,12 @@ void map_get_visible_objects(Map m, TCOD_list_t objs, perception *visflags, mapV
   for(int i = 0; i < map_object_count(m); i++) {
     o = map_get_object(m, i);
     pt = object_position(o);
-    index = tile_index(pt.x, pt.y, pt.z, map_size(m), bpt, bsz);
-    flags = visflags[index];
-    if(map_item_visible(flags)) {
-      TCOD_list_push(objs, o);
+    if(tile_index_in_bounds(pt.x, pt.y, pt.z, map_size(m), bpt, bsz)) {
+      index = tile_index(pt.x, pt.y, pt.z, map_size(m), bpt, bsz);
+      flags = visflags[index];
+      if(map_item_visible(flags)) {
+        TCOD_list_push(objs, o);
+      }
     }
   }
 }

@@ -134,10 +134,19 @@ void object_note_object_moved(Object o, Object o2, mapVec delta) {
     s = object_get_sensor(o,i);
     sensor_swept_bounds(s, &bpt, &bsz);
     vistiles = sensor_get_perceptmap(s);
-    oldIndex = tile_index(oldPos.x, oldPos.y, oldPos.z, map_size(m), bpt, bsz);
-    newIndex = tile_index(newPos.x, newPos.y, newPos.z, map_size(m), bpt, bsz);
-    oldPerception = vistiles[oldIndex];
-    newPerception = vistiles[newIndex];
+
+    if(tile_index_in_bounds(oldPos.x, oldPos.y, oldPos.z, map_size(m), bpt, bsz)) {
+      oldIndex = tile_index(oldPos.x, oldPos.y, oldPos.z, map_size(m), bpt, bsz);
+      oldPerception = vistiles[oldIndex];
+    } else {
+      oldPerception = percept_none;
+    }
+    if(tile_index_in_bounds(newPos.x, newPos.y, newPos.z, map_size(m), bpt, bsz)) {
+      newIndex = tile_index(newPos.x, newPos.y, newPos.z, map_size(m), bpt, bsz);
+      newPerception = vistiles[newIndex];
+    } else {
+      oldPerception = percept_none;
+    }
     oldVis = map_item_visible(oldPerception);
     newVis = map_item_visible(newPerception);
     if(oldVis || newVis) {

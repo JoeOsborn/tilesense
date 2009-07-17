@@ -106,22 +106,26 @@ mapVec mapvec_turn_facing(mapVec f, int amt) {
   return mapvec_normalize(mapvec_rotate(f, mapvec_zero, rads, 1));
 }
 
-int tile_index(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz) {
+bool tile_index_in_bounds(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz) {
   //bail on stuff outside of the map
   if(x < 0 || y < 0 || z < 0) {
-    abort();
-    return -1;
+    return false;
   }
   if(x >= sz.x || y >= sz.y || z >= sz.z) {
-    abort();
-    return -1;
+    return false;
   }
   //bail on stuff outside of bounds
   if(x < borig.x || y < borig.y || z < borig.z) {
-    abort();
-    return -1;
+    return false;
   }
-  if(x >= borig.x + bsz.x || y >= borig.y + bsz.y || z >= borig.z + bsz.z) {
+  if((x >= (borig.x + bsz.x)) || (y >= (borig.y + bsz.y)) || (z >= (borig.z + bsz.z))) {
+    return false;
+  }
+  return true;
+}
+
+int tile_index(int x, int y, int z, mapVec sz, mapVec borig, mapVec bsz) {
+  if(!tile_index_in_bounds(x, y, z, sz, borig, bsz)) {
     abort();
     return -1;
   }
