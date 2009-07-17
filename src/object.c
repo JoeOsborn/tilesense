@@ -48,6 +48,9 @@ Map object_map(Object o) {
 int object_sensor_count(Object o) {
   return TCOD_list_size(o->sensors);
 }
+TCOD_list_t object_sensors(Object o) {
+  return o->sensors;
+}
 Sensor object_get_sensor(Object o, int i) {
   return TCOD_list_get(o->sensors, i);
 }

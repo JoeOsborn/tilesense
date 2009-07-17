@@ -37,6 +37,7 @@ void object_set_context(Object o, void *ctx);
 void object_sense(Object o);
 
 int object_sensor_count(Object o);
+TCOD_list_t object_sensors(Object o);
 Sensor object_get_sensor(Object o, int i);
 void object_add_sensor(Object o, Sensor s);
 void object_remove_sensor(Object o, Sensor s);
