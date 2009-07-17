@@ -4,7 +4,7 @@
 #include <string.h>
 #include <libtcod.h>
 
-Volume _volume_new() {
+Volume volume_new() {
   return malloc(sizeof(struct _volume));
 }
 Volume _volume_raw_copy(Volume v) {
@@ -278,7 +278,7 @@ void _frustum_remake_planes(Frustum f) {
 }
 
 Frustum frustum_new() {
-  return _volume_new();
+  return volume_new();
 }
 Frustum frustum_init(Frustum f, mapVec pos, mapVec facing, int fovx, int fovz, int near, int far) {
   f = _volume_init(f, VolumeTypeFrustum, pos);
@@ -345,7 +345,7 @@ void frustum_swept_bounds(Frustum f, mapVec *p, mapVec *sz) {
 }
 
 Sphere sphere_new() {
-  return _volume_new();
+  return volume_new();
 }
 Sphere sphere_init(Sphere s, mapVec pos, float radius) {
   s = _volume_init(s, VolumeTypeSphere, pos);
@@ -433,7 +433,7 @@ void _box_remake_planes(Box b) {
 }
 
 Box box_new() {
-  return _volume_new();
+  return volume_new();
 }
 Box box_init(Box b, mapVec pos, mapVec facing, mapVec size) {
   b = _volume_init(b, VolumeTypeBox, pos);

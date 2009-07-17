@@ -45,6 +45,7 @@ typedef Volume Sphere;
 typedef Volume Box;
 typedef Volume AABox;
 
+Volume volume_new();
 Volume volume_copy(Volume v);
 void volume_free(Volume v);
 
