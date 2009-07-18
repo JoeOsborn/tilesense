@@ -34,6 +34,9 @@ void sensor_free(Sensor s) {
   TS_LIST_CLEAR_AND_DELETE(s->stimuli, stimulus);
   free(s);
 }
+char *sensor_id(Sensor s) {
+  return s->id;
+}
 Volume sensor_volume(Sensor s) {
   return s->volume;
 }

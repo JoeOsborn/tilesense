@@ -12,7 +12,17 @@ typedef enum {
   StimTileVisChange,
   StimObjLitChange,
   StimObjVisChange,
-  StimObjMoved
+  StimObjMoved,
+  StimUser1,
+  StimUser2,
+  StimUser3,
+  StimUser4,
+  StimUser5,
+  StimUser6,
+  StimUser7,
+  StimUser8,
+  StimUser9,
+  StimUser10
 } stimtype;
 
 struct _stimulus {
@@ -44,7 +54,7 @@ struct _stimulus {
   stimtype type;
   struct timeval tv;
 
-  void *context;
+  void *stimulusContext;
 };
 typedef struct _stimulus * Stimulus;
 
@@ -53,6 +63,7 @@ typedef struct _stimulus * Stimulus;
 Stimulus stimulus_new();
 Stimulus stimulus_init(Stimulus s);
 Stimulus stimulus_init_generic(Stimulus s, void *context);
+Stimulus stimulus_init_user(Stimulus s, stimtype type, void *context);
 Stimulus stimulus_init_tile_vis_change(Stimulus s, perception *newMap, mapVec position, mapVec size);
 Stimulus stimulus_init_tile_lit_change(Stimulus s, perception *newMap, mapVec position, mapVec size);
 Stimulus stimulus_init_obj_vis_change(Stimulus s, Object obj, perception newFlags, void *context);
@@ -62,6 +73,8 @@ void stimulus_free(Stimulus s);
 
 stimtype stimulus_type(Stimulus s);
 struct timeval stimulus_time(Stimulus s);
+
+void *stimulus_generic_get_context(Stimulus s);
 
 perception *stimulus_tile_sight_change_get_new_perceptmap(Stimulus s);
 mapVec stimulus_tile_sight_change_get_position(Stimulus s);

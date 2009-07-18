@@ -190,8 +190,11 @@ void flagset_free(Flagset fs) {
   free(fs);
 }
 bool flagset_any_match(Flagset f1, Flagset f2, FlagSchema fsc) {
+  int f1v, f2v;
   TS_LIST_FOREACH(fsc,
-    if(flagset_get_index(f1, fsc, __i) == flagset_get_index(f2, fsc, __i)) {
+    f1v = flagset_get_index(f1, fsc, __i);
+    f2v = flagset_get_index(f2, fsc, __i);
+    if((f1v != 0) && (f1v == f2v)) {
       return true;
     }
   );

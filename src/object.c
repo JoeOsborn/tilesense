@@ -4,6 +4,7 @@
 #include "stimulus.h"
 #include "sensor.h"
 #include "tslist.h"
+#include "tilesense.h"
 
 Object object_new() {
   return malloc(sizeof(struct _object));
@@ -53,6 +54,14 @@ TCOD_list_t object_sensors(Object o) {
 }
 Sensor object_get_sensor(Object o, int i) {
   return TCOD_list_get(o->sensors, i);
+}
+Sensor object_get_sensor_named(Object o, char *n) {
+  TS_LIST_FOREACH(o->sensors,
+    if(STREQ(sensor_id(each), n)) {
+      return each;
+    }
+  );
+  return NULL;
 }
 void object_add_sensor(Object o, Sensor s) {
   TCOD_list_push(o->sensors, s);

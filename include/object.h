@@ -12,14 +12,15 @@ struct _object {
   mapVec facing;
   TCOD_list_t sensors;
   TCOD_list_t lights;
+    
   void * map; //ugly hack to avoid recursive struct def'n, should be Map
   
   void *context;
 };
 typedef struct _object * Object;
 
-#include "map.h" //ugly hack to avoid recursive bleh
-#include "sensor.h" //ugly hack to avoid recursive bleh
+#include "map.h" //ugly hack to avoid recursive bleh...
+#include "sensor.h"
 #include "light.h"
 
 Object object_new();
@@ -39,6 +40,7 @@ void object_sense(Object o);
 int object_sensor_count(Object o);
 TCOD_list_t object_sensors(Object o);
 Sensor object_get_sensor(Object o, int i);
+Sensor object_get_sensor_named(Object o, char *n);
 void object_add_sensor(Object o, Sensor s);
 void object_remove_sensor(Object o, Sensor s);
 

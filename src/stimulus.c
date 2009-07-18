@@ -42,6 +42,12 @@ Stimulus stimulus_init_generic(Stimulus s, void *context) {
   return s;
 }
 
+Stimulus stimulus_init_user(Stimulus s, stimtype type, void *context) {
+  stimulus_init_generic(s, context);
+  s->type = type;
+  return s;
+}
+
 Stimulus stimulus_init_tile_sight_change(Stimulus s, perception *newMap, mapVec position, mapVec size, stimtype type) {
   int stimSz = size.x*size.y*size.z*sizeof(perception);
   s->stim.tile_sight_change.newMap = malloc(stimSz);
@@ -96,6 +102,10 @@ stimtype stimulus_type(Stimulus s) {
 
 struct timeval stimulus_time(Stimulus s) {
   return s->tv;
+}
+
+void *stimulus_generic_get_context(Stimulus s) {
+  return s->stim.generic.context;
 }
 
 perception *stimulus_tile_sight_change_get_new_perceptmap(Stimulus s) {
