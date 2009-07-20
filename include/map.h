@@ -4,9 +4,6 @@
 #include <libtcod.h>
 
 #include "geom.h"
-#include "exit.h"
-#include "tile.h"
-#include "volume.h"
 
 struct _map {
   char *id;
@@ -22,12 +19,19 @@ struct _map {
   TCOD_list_t tileset;
   char ambientLight;
   // TCOD_list_t exits;
+  //dense array of objects. later, should sort by name.
   TCOD_list_t objects;
+  void *objectMap;
   void *context;
 };
 typedef struct _map * Map;
 
 #include "object.h" //ugly hack to avoid recursive type bleh
+#include "objectmap.h"
+
+#include "exit.h"
+#include "tile.h"
+#include "volume.h"
 
 Map map_new();
 Map map_init(
@@ -56,12 +60,15 @@ void map_remove_object_named(Map m, char *id);
 Object map_get_object(Map m, int i);
 Object map_get_object_named(Map m, char *id);
 int map_object_count(Map m);
+TCOD_list_t map_objects_at(Map m, int x, int y, int z);
+TCOD_list_t map_objects_at_position(Map m, mapVec pos);
 
 unsigned int map_tile_index(Map m, int x, int y, int z);
 unsigned char map_tile_at_index(Map m, int i);
 unsigned char map_tile_at(Map m, int x, int y, int z);
 Tile map_get_tile(Map m, int tileIndex);
 Tile map_tiledef_at(Map m, int x, int y, int z);
+Tile map_tiledef_at_position(Map m, mapVec pos);
 
 void map_move_object(Map m, char *id, mapVec delta);
 void map_turn_object(Map m, char *id, int amt);

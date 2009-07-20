@@ -56,6 +56,7 @@ Map map_init(
   m->ambientLight = ambientLight;
   // m->exits = TCOD_list_new();
   m->objects = TCOD_list_new();
+  m->objectMap = objectmap_init(objectmap_new(), sz);
   m->context = ctx;
   return m;
 }
@@ -63,8 +64,11 @@ void map_free(Map m) {
   free(m->id);
   free(m->tilemap);
   free(m->perceptmap);
+  objectmap_free(m->objectMap);
+  TCOD_map3_delete(m->fovmap);
 //  TS_LIST_CLEAR_AND_DELETE(m->exits, exit);
   TS_LIST_CLEAR_AND_DELETE(m->tileset, tile);
+  TS_LIST_CLEAR_AND_DELETE(m->objects, object);
   free(m);
 }
 
@@ -94,10 +98,12 @@ Tile map_get_tile(Map m, int tileIndex) {
 
 void map_add_object(Map m, Object o) {
   TCOD_list_push(m->objects, o);
+  objectmap_insert(m->objectMap, o);
 }
 void map_remove_object(Map m, Object o) {
   if(o != NULL) {
     TCOD_list_remove(m->objects, o);
+    objectmap_remove(m->objectMap, o);
     object_free(o);
   }
 }
@@ -110,6 +116,13 @@ void map_remove_object_named(Map m, char *id) {
 Object map_get_object(Map m, int i) {
   return TCOD_list_get(m->objects, i);
 }
+TCOD_list_t map_objects_at(Map m, int x, int y, int z) {
+  return map_objects_at_position(m, (mapVec){x, y, z});
+}
+TCOD_list_t map_objects_at_position(Map m, mapVec pos) {
+  return objectmap_get(m->objectMap, pos);
+}
+
 Object map_get_object_named(Map m, char *id) {
   for(int i = 0; i < map_object_count(m); i++) {
     Object o = map_get_object(m, i);
@@ -126,6 +139,7 @@ int map_object_count(Map m) {
 void map_move_object(Map m, char *id, mapVec delta) {  
   Object o = map_get_object_named(m, id), o2;
   //the move updates its sensors
+  objectmap_move(m->objectMap, o, delta);
   object_move(o, delta);
   //update any sensors that might see it now
   for(int i = 0; i < map_object_count(m); i++) {
@@ -143,7 +157,7 @@ void map_turn_object(Map m, char *id, int amt) {
   for(int i = 0; i < map_object_count(m); i++) {
     o2 = map_get_object(m, i);
     if(o2 != o) {
-      #warning send a stimulus to all sensors that can see this object
+      object_note_object_turned(o2, o, amt);
     }
   }
 }
@@ -180,6 +194,10 @@ Tile map_tiledef_at_index(Map m, int i) {
 
 Tile map_tiledef_at(Map m, int x, int y, int z) {
   return map_tiledef_at_index(m, map_tile_at(m, x, y, z));
+}
+
+Tile map_tiledef_at_position(Map m, mapVec pos) {
+  return map_tiledef_at(m, pos.x, pos.y, pos.z);
 }
 
 void map_remake_fovmap(Map m) {
@@ -277,6 +295,7 @@ void map_get_visible_objects(Map m, TCOD_list_t objs, perception *visflags, mapV
   int index;
   mapVec pt;
   Object o;
+  //would it be faster to go from bpt<>bsz and use objectmap_get?
   for(int i = 0; i < map_object_count(m); i++) {
     o = map_get_object(m, i);
     pt = object_position(o);

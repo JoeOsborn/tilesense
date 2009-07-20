@@ -13,6 +13,7 @@ C_OBJS=\
   $(TMPDIR)/light.o \
   $(TMPDIR)/map.o \
   $(TMPDIR)/object.o \
+  $(TMPDIR)/objectmap.o \
   $(TMPDIR)/sensor.o \
   $(TMPDIR)/stimulus.o \
   $(TMPDIR)/tile.o \
@@ -25,6 +26,7 @@ HEADERS=\
   $(INCDIR)/light.h \
   $(INCDIR)/map.h \
   $(INCDIR)/object.h \
+  $(INCDIR)/objectmap.h \
   $(INCDIR)/sensor.h \
   $(INCDIR)/stimulus.h \
   $(INCDIR)/tile.h \

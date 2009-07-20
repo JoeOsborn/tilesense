@@ -53,5 +53,6 @@ void object_move(Object o, mapVec delta);
 void object_turn(Object o, int amt);
 
 void object_note_object_moved(Object o, Object o2, mapVec delta);
+void object_note_object_turned(Object o, Object o2, int amt);
 
 #endif

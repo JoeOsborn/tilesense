@@ -167,3 +167,7 @@ void object_note_object_moved(Object o, Object o2, mapVec delta) {
     }
   }
 }
+
+void object_note_object_turned(Object o, Object o2, int amt) {
+  #warning nop
+}
