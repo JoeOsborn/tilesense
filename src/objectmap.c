@@ -1,6 +1,8 @@
 #include "objectmap.h"
 #include <limits.h>
 
+#include <assert.h>
+
 ObjectMap objectmap_new() {
   return calloc(1, sizeof(struct _object_map));
 }
@@ -35,7 +37,7 @@ int objectmap_find_entry_between(ObjectMap om, int start, int end, int index) {
     //else, return start+1
     return (om->entries[start].index >= index) ? start : start+1;
   }
-  if(start <= (end-1)) {
+  if(start == (end-1)) {
     if (om->entries[start].index >= index) { return start; }
     if (om->entries[end].index >= index) { return end; }
     return end + 1;
@@ -124,7 +126,7 @@ void objectmap_insert_at(ObjectMap om, Object o, mapVec pos) {
 }
 
 void objectmap_remove_at(ObjectMap om, Object o, mapVec pos) {
-  int objIndex = objectmap_index(om, object_position(o));
+  int objIndex = objectmap_index(om, pos);
   int idx = objectmap_find_entry(om, objIndex, true);
   if(idx == -1) { return; }
   if(TCOD_list_size(om->entries[idx].objects) == 1) {
@@ -146,6 +148,8 @@ void objectmap_remove(ObjectMap om, Object o) {
 void objectmap_move(ObjectMap om, Object o, mapVec delta) {
   #warning later optimization
   //if the object is alone in the old idx and the new idx does not exist, just shuffle around the array.
+  assert(TCOD_list_contains(objectmap_get(om, object_position(o)), o));
   objectmap_remove(om, o);
   objectmap_insert_at(om, o, mapvec_add(object_position(o), delta));
+  assert(TCOD_list_contains(objectmap_get(om, mapvec_add(object_position(o), delta)), o));
 }
