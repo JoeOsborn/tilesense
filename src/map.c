@@ -7,6 +7,8 @@
 
 #include "tslist.h"
 
+#include <assert.h>
+
 //use chars for tile indices...
 //then have an int array for all the tile data.  
 //would use flagsets, but it's expensive to return a new flagset for stimulus purposes.
