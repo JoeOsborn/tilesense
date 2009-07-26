@@ -171,3 +171,9 @@ void object_note_object_moved(Object o, Object o2, mapVec delta) {
 void object_note_object_turned(Object o, Object o2, int amt) {
   #warning nop
 }
+
+void object_set_map(Object o, Map m) {
+  o->map = m;
+  TS_LIST_FOREACH(o->lights, light_set_map(each, m));
+  TS_LIST_FOREACH(o->sensors, sensor_set_map(each, m));
+}

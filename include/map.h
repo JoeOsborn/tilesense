@@ -70,6 +70,7 @@ Tile map_get_tile(Map m, int tileIndex);
 Tile map_tiledef_at(Map m, int x, int y, int z);
 Tile map_tiledef_at_position(Map m, mapVec pos);
 
+void map_set_object_position(Map m, char *id, mapVec pos);
 void map_move_object(Map m, char *id, mapVec delta);
 void map_turn_object(Map m, char *id, int amt);
 

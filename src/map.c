@@ -101,12 +101,13 @@ Tile map_get_tile(Map m, int tileIndex) {
 void map_add_object(Map m, Object o) {
   TCOD_list_push(m->objects, o);
   objectmap_insert(m->objectMap, o);
+  object_set_map(o, m);
 }
 void map_remove_object(Map m, Object o) {
   if(o != NULL) {
     TCOD_list_remove(m->objects, o);
     objectmap_remove(m->objectMap, o);
-    object_free(o);
+//    object_free(o); don't free it!
   }
 }
 void map_remove_object_at(Map m, int i) {
@@ -136,6 +137,11 @@ Object map_get_object_named(Map m, char *id) {
 }
 int map_object_count(Map m) {
   return TCOD_list_size(m->objects);
+}
+
+void map_set_object_position(Map m, char *id, mapVec pos) {
+  Object o = map_get_object_named(m, id);
+  map_move_object(m, id, mapvec_subtract(pos, object_position(o)));
 }
 
 void map_move_object(Map m, char *id, mapVec delta) {  

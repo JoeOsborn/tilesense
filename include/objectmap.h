@@ -26,6 +26,8 @@ ObjectMap objectmap_init(ObjectMap om, mapVec sz);
 void objectmap_free(ObjectMap om);
 
 TCOD_list_t objectmap_get(ObjectMap om, mapVec position);
+void objectmap_insert_at(ObjectMap om, Object o, mapVec pos);
+void objectmap_remove_at(ObjectMap om, Object o, mapVec pos);
 void objectmap_insert(ObjectMap om, Object o);
 void objectmap_remove(ObjectMap om, Object o);
 void objectmap_move(ObjectMap om, Object o, mapVec delta);
