@@ -32,7 +32,7 @@ void stimulus_free(Stimulus s) {
 
 Stimulus stimulus_init_type(Stimulus s, stimtype type) {
   s->type = type;
-  gettimeofday(&(s->tv), NULL);
+  s->stimTime = TCOD_sys_elapsed_milli();
   return s;
 }
 
@@ -100,8 +100,8 @@ stimtype stimulus_type(Stimulus s) {
   return s->type;
 }
 
-struct timeval stimulus_time(Stimulus s) {
-  return s->tv;
+uint32 stimulus_time(Stimulus s) {
+  return s->stimTime;
 }
 
 void *stimulus_generic_get_context(Stimulus s) {

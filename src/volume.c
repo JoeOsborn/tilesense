@@ -178,7 +178,7 @@ void _frustum_remake_planes(Frustum f) {
   float dzf = (tan(zang)*far);
   float dzn = (tan(zang)*near);
   
-  #warning still doesn't quite work in Z
+  #warning still does not quite work in Z
   
   mapVec lp1 = (mapVec){dxn, -dyn, dzn};
   mapVec lp2 = (mapVec){dxf, -dyf, dzf};

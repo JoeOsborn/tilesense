@@ -76,12 +76,12 @@ TCOD_LIBS=-L./libtcod/lib -ltcod-mingw-debug
 $(C_OBJS) : $(HEADERS)
 
 libtilesense.a : $(TMPDIR) $(C_OBJS)
-	$(CC) -mwindows -o $@ -shared -Wl,--out-implib,libtilesense.a $(C_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(OPENGL_LIB) $(TCOD_LIBS)
+	$(CPP) -mwindows -o $@ -shared -Wl,--out-implib,libtilesense.a $(C_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(OPENGL_LIB) $(TCOD_LIBS)
 
 $(TEST_OBJS) : $(HEADERS)
 
 test : libtilesense.a $(TMPDIR)/test $(TEST_OBJS)
-	$(CC) $(CFLAGS) -o $@ $(TEST_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(OPENGL_LIB) $(TCOD_LIBS) libtilesense.a
+	$(CPP) $(CFLAGS) -o $@ $(TEST_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(OPENGL_LIB) $(TCOD_LIBS) libtilesense.a
 
 clean :
 	rm -f $(C_OBJS) $(TEST_OBJS) test libtilesense.a

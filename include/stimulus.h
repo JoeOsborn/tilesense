@@ -52,7 +52,7 @@ struct _stimulus {
       } obj_moved; 
   } stim;
   stimtype type;
-  struct timeval tv;
+  uint32 stimTime;
 
   void *stimulusContext;
 };
@@ -72,7 +72,7 @@ Stimulus stimulus_init_obj_moved(Stimulus s, Object obj, mapVec dir, perception 
 void stimulus_free(Stimulus s);
 
 stimtype stimulus_type(Stimulus s);
-struct timeval stimulus_time(Stimulus s);
+uint32 stimulus_time(Stimulus s);
 
 void *stimulus_generic_get_context(Stimulus s);
 
