@@ -51,27 +51,27 @@ $(TMPDIR)/test/%.o : $(SRCDIR)/../%.c
 
 #dependencies
 # SDL
-SDL_DIR=dependencies/SDL-1.2.12
+SDL_DIR=libtcod/dependencies/SDL-1.2.12
 SDL_FLAGS=-I $(SDL_DIR)/include
 SDL_LIBS=-L $(SDL_DIR)/lib/mingw -lSDL.dll
 
 # ZLIB
-ZLIB_DIR=dependencies/zlib-1.2.3
+ZLIB_DIR=libtcod/dependencies/zlib-1.2.3
 ZLIB_FLAGS=-I $(ZLIB_DIR)/include
 ZLIB_LIBS=$(ZLIB_DIR)/lib/mingw/libz.a
 
 # PNG
-PNG_DIR=dependencies/libpng-1.2.31
+PNG_DIR=libtcod/dependencies/libpng-1.2.31
 PNG_FLAGS=-I $(PNG_DIR)/include
 PNG_LIBS=$(PNG_DIR)/lib/mingw/libpng.a
 
 # OPENGL
-OPENGL_LIB=-lopengl32
+OPENGL_LIB=-L./libtcod -lopengl32
 
 # TCOD
 TCOD_DIR=libtcod
 TCOD_FLAGS=-I $(TCOD_DIR)/include -I $(TCOD_DIR)/include/gui
-TCOD_LIBS=-L./lib -ltcod-mingw-debug
+TCOD_LIBS=-L./libtcod/lib -ltcod-mingw-debug
 
 $(C_OBJS) : $(HEADERS)
 
