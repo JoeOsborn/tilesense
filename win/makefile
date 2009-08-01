@@ -1,9 +1,9 @@
 SRCDIR=./src
 INCDIR=./include
-CC=mingw32-gcc
-CPP=mingw32-g++
+CC=gcc
+CPP=g++
 FLAGS=-ggdb
-CFLAGS=$(FLAGS) -std=gnu9x -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
+CFLAGS=$(FLAGS) -DMINGW -std=gnu9x -Wall -I$(INCDIR) $(SDL_FLAGS) $(ZLIB_FLAGS) $(PNG_FLAGS) $(TCOD_FLAGS) -fno-strict-aliasing
 .SUFFIXES: .dll .a .o .h .c .hpp .cpp
 TMPDIR=/tmp/tilesense
 
@@ -18,7 +18,8 @@ C_OBJS=\
   $(TMPDIR)/sensor.o \
   $(TMPDIR)/stimulus.o \
   $(TMPDIR)/tile.o \
-  $(TMPDIR)/volume.o
+  $(TMPDIR)/volume.o \
+  $(TMPDIR)/snprintf.o
 
 HEADERS=\
   $(INCDIR)/exit.h \
@@ -32,7 +33,8 @@ HEADERS=\
   $(INCDIR)/stimulus.h \
   $(INCDIR)/tile.h \
   $(INCDIR)/tslist.h \
-  $(INCDIR)/volume.h
+  $(INCDIR)/volume.h \
+  $(INCDIR)/snprintf.h
 
 TEST_OBJS=\
   $(TMPDIR)/test/test.o
@@ -71,17 +73,17 @@ OPENGL_LIB=-L./libtcod -lopengl32
 # TCOD
 TCOD_DIR=libtcod
 TCOD_FLAGS=-I $(TCOD_DIR)/include -I $(TCOD_DIR)/include/gui
-TCOD_LIBS=-L./libtcod/lib -ltcod-mingw-debug
+TCOD_LIBS=-L./libtcod/lib -ltcod-mingw-debug -ltcod-gui-mingw-debug
 
 $(C_OBJS) : $(HEADERS)
 
 libtilesense.a : $(TMPDIR) $(C_OBJS)
-	$(CPP) -mwindows -o $@ -shared -Wl,--out-implib,libtilesense.a $(C_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(OPENGL_LIB) $(TCOD_LIBS)
+	$(CPP) -mwindows -o $@ -shared -Wl,--out-implib,libtilesense.a $(C_OBJS) $(TCOD_LIBS)
 
 $(TEST_OBJS) : $(HEADERS)
 
 test : libtilesense.a $(TMPDIR)/test $(TEST_OBJS)
-	$(CPP) $(CFLAGS) -o $@ $(TEST_OBJS) $(ZLIB_LIBS) $(PNG_LIBS) $(SDL_LIBS) $(OPENGL_LIB) $(TCOD_LIBS) libtilesense.a
+	$(CPP) $(CFLAGS) -o $@ $(TEST_OBJS) libtilesense.a $(TCOD_LIBS)
 
 clean :
 	rm -f $(C_OBJS) $(TEST_OBJS) test libtilesense.a

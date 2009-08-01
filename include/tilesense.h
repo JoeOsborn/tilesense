@@ -16,5 +16,8 @@
 
 #include <string.h>
 #define STREQ(_a, _b) (strcmp((_a), (_b)) == 0)
+#ifdef MINGW
+#include <snprintf.h>
+#endif
 
 #endif
